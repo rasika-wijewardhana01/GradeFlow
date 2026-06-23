@@ -1,14 +1,21 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
-// Manual chunk map — keeps large, stable modules in separate browser-cached bundles.
+// Manual chunk map — only truly self-contained modules go here.
+//
+// IMPORTANT: exam-manager.js and analytics.js must NOT be split into their
+// own chunks. They use bare identifiers (_exams, _activeExamId, EM_STORAGE_KEY,
+// students, subjects, marks, results, autoIndexCounter, etc.) that live in the
+// autosave.js / state.js module closures in the main bundle. When Vite extracts
+// them into separate ES module chunks those bare names become ReferenceErrors
+// because each chunk has its own strict-mode module scope.
+//
+// splash, tour, and swipe are safe to split because they are genuinely
+// self-contained IIFEs with no cross-module closure dependencies.
 const CHUNK_MAP = {
-  'storage':      'src/modules/storage.js',
-  'analytics':    'src/modules/analytics.js',
-  'exam-manager': 'src/modules/exam-manager.js',
-  'splash':       'src/splash-screen.js',
-  'tour':         'src/tour.js',
-  'swipe':        'src/swipe-gestures.js',
+  'splash': 'src/splash-screen.js',
+  'tour':   'src/tour.js',
+  'swipe':  'src/swipe-gestures.js',
 };
 
 export default defineConfig({
@@ -41,8 +48,9 @@ export default defineConfig({
     },
     minify: true,
     sourcemap: true,
-    // analytics.js is intentionally large (71 KB source) — silence the warning.
-    chunkSizeWarningLimit: 800,
+    // exam-manager + analytics are now in the main bundle (see CHUNK_MAP comment).
+    // The main chunk is intentionally large — silence the warning.
+    chunkSizeWarningLimit: 1200,
   },
 
   server: {

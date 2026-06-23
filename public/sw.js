@@ -14,7 +14,7 @@
 //      first visit.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'gradeflow-v7';
+const CACHE_NAME = 'gradeflow-v8';
 
 // Only list files whose paths are stable (not fingerprinted by Vite).
 // /style.css is intentionally absent — after the Vite build it becomes
