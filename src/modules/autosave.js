@@ -453,6 +453,16 @@ function _showFileReauthBanner() {
 
 // ── Check for saved session on page load ──
 async function checkForSavedSession() {
+  // ── Wait for StorageEngine to finish its init ──────────────────────────
+  // StorageEngine._init() restores any saved folder handle asynchronously.
+  // Without this await, checkForSavedSession (fired synchronously from the
+  // DOMContentLoaded handler) races ahead while _tryRestoreHandle is still
+  // pending — _dirHandle is null, needsReauth() returns false, and the file
+  // restore path is silently skipped on every single cold start.
+  if (typeof window.StorageEngine.ready === 'function') {
+    await window.StorageEngine.ready();
+  }
+
   try {
     const raw = await window.StorageEngine.getItem(LS_KEY);
     if (!raw) {

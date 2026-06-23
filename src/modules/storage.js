@@ -262,19 +262,29 @@ const StorageEngine = (function () {
     if (!_supported) return false;
     const saved = await _loadHandle();
     if (!saved) return false;
+
+    // Set the handle immediately — before queryPermission — so that even if
+    // the permission check throws, _dirHandle is preserved for later reauth.
+    _dirHandle = saved;
+
     try {
       const perm = await saved.queryPermission({ mode: 'readwrite' });
       if (perm === 'granted') {
-        _dirHandle   = saved;
         _needsReauth = false;
         _updateSaveLocationUI(true);
         return true;
       }
-      _dirHandle   = saved;
-      _needsReauth = true;   // permission is 'prompt' — user must re-authorize
+      // Permission is 'prompt' — needs a user gesture to re-grant
+      _needsReauth = true;
       _updateSaveLocationUI(false, true);
       return false;
-    } catch (_) { return false; }
+    } catch (_) {
+      // queryPermission threw (e.g. handle became invalid) — treat as prompt
+      // so the reauth banner can still appear and the user can recover.
+      _needsReauth = true;
+      _updateSaveLocationUI(false, true);
+      return false;
+    }
   }
 
   let _pickerOpen = false;
@@ -458,12 +468,24 @@ const StorageEngine = (function () {
     if (typeof openBackupModal === 'function') window.openBackupModal();
   }
 
+  // ════════════════════════════════════════════════════════════════════════
+  //  READY PROMISE
+  //  Resolves after _init() completes (migration + handle restore).
+  //  External code (e.g. checkForSavedSession) must await StorageEngine.ready()
+  //  before reading storage state, to avoid a race where the folder handle
+  //  hasn't been restored yet when the session check runs.
+  // ════════════════════════════════════════════════════════════════════════
+  let _readyResolve;
+  const _readyPromise = new Promise(function (r) { _readyResolve = r; });
+
   // ── Initialise on page load ──────────────────────────────────────────────
   //  1. Run IDB migration (localStorage → IndexedDB) — once, silently
   //  2. Restore previously granted folder handle
+  //  3. Resolve _readyPromise so awaiting code can proceed safely
   async function _init() {
     try { await _migrateFromLocalStorage(); } catch (_) {}
     try { await _tryRestoreHandle(); } catch (_) {}
+    _readyResolve(); // signal: handle restored, storage is ready
   }
 
   if (document.readyState === 'loading') {
@@ -500,6 +522,7 @@ const StorageEngine = (function () {
     reauthorize:   _reauthorize,
     updateUI:      _updateSaveLocationUI,
     needsReauth:   function () { return _needsReauth; },
+    ready:         function () { return _readyPromise; },
     _getDirHandle: function () { return _dirHandle; },
   };
 })();
