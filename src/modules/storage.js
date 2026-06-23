@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 //  src/modules/storage.js
-//  StorageEngine: IndexedDB primary + localStorage fallback.
+//  StorageEngine: File System API (Tier 1) + IndexedDB (Tier 2).
 //  Self-contained IIFE — zero dependencies on app state.
 //  Lifted verbatim from app.js lines 2852–3274.
 // ═══════════════════════════════════════════════════════════════
@@ -146,10 +146,10 @@ const StorageEngine = (function () {
   // ════════════════════════════════════════════════════════════════════════
   //  MIGRATION  — runs once, silently moves localStorage data → IndexedDB
   //
-  //  The flag 'gf_idb_migrated_v2' is stored in localStorage (it is a
-  //  tiny string, not app data, so it is fine there).  Once set it never
-  //  runs again.  If IndexedDB is unavailable the migration is skipped
-  //  and localStorage continues to work as the fallback.
+  //  The flag 'gf_idb_migrated_v2' is a tiny string stored in localStorage
+  //  (acceptable — it is metadata, not app data).  Once set it never runs
+  //  again.  After migration completes, localStorage is never read for app
+  //  data; IDB is the sole browser-side store going forward.
   // ════════════════════════════════════════════════════════════════════════
 
   const _MIGRATED_FLAG = 'gf_idb_migrated_v2';
@@ -183,8 +183,8 @@ const StorageEngine = (function () {
       }
     }
 
-    // Mark complete — do NOT delete from localStorage yet so a hard-reload
-    // before the first IDB read still works.  We clean LS lazily on getItem.
+    // Mark complete.  Legacy LS keys are left in place and swept out lazily
+    // by removeItem() calls; they are never read again by this engine.
     try { localStorage.setItem(_MIGRATED_FLAG, '1'); } catch (_) {}
 
     if (anyMigrated) {
@@ -328,8 +328,12 @@ const StorageEngine = (function () {
   //
   //  Priority chain for reads/writes:
   //    1. File System folder  (if user chose one and permission is active)
-  //    2. IndexedDB           (default for all browsers)
-  //    3. localStorage        (emergency fallback if IDB is unavailable)
+  //    2. IndexedDB           (sole browser-side store — always available
+  //                            thanks to the v3 repair logic above)
+  //
+  //  localStorage is NOT used as a data store.  The one-time migration in
+  //  _migrateFromLocalStorage() pulled any legacy LS data into IDB on first
+  //  load and that is the only time localStorage is touched for app data.
   // ════════════════════════════════════════════════════════════════════════
 
   async function setItem(key, value) {
@@ -340,29 +344,23 @@ const StorageEngine = (function () {
         if (perm === 'granted') {
           await _fileSet(key, value);
           // Mirror to IDB so a reload without folder permission still works.
-          // If IDB fails (e.g. data store not yet repaired), fall back to
-          // localStorage as a last-resort bridge — this keeps the session
-          // accessible even if the folder permission lapses on the next load.
-          try {
-            await _idbSet(_DATA_STORE, key, value);
-          } catch (_) {
-            try { localStorage.setItem(key, value); } catch (_2) {}
-          }
+          // This is a best-effort mirror; the file is the authoritative copy.
+          try { await _idbSet(_DATA_STORE, key, value); } catch (_) {}
           return;
         }
         _updateSaveLocationUI(false, true);
       } catch (_) {}
     }
-    // ── Tier 2: IndexedDB ──
+    // ── Tier 2: IndexedDB (sole browser-side store) ──
     try {
       await _idbSet(_DATA_STORE, key, value);
-      return;
     } catch (e) {
-      console.warn('[StorageEngine] IDB setItem failed, falling back to localStorage:', e);
+      console.error('[StorageEngine] IDB setItem failed — data NOT saved:', e);
+      // Fire a custom event so the app can surface a visible warning to the user
+      window.dispatchEvent(new CustomEvent('gf:storage-error', {
+        detail: { op: 'setItem', key, error: e }
+      }));
     }
-    // ── Tier 3: localStorage ──
-    try { localStorage.setItem(key, value); }
-    catch (e) { console.warn('[StorageEngine] localStorage.setItem failed:', e); }
   }
 
   async function getItem(key) {
@@ -373,23 +371,20 @@ const StorageEngine = (function () {
         if (perm === 'granted') {
           const v = await _fileGet(key);
           if (v !== null) return v;
-          // File missing → check IDB (handles first-launch migration path)
+          // File missing → fall through to IDB (handles first-launch migration)
         }
       } catch (_) {}
     }
-    // ── Tier 2: IndexedDB ──
+    // ── Tier 2: IndexedDB (sole browser-side store) ──
     try {
-      const v = await _idbGet(_DATA_STORE, key);
-      if (v !== null) {
-        // Lazily remove from localStorage now that IDB has it
-        try { localStorage.removeItem(key); } catch (_) {}
-        return v;
-      }
+      return await _idbGet(_DATA_STORE, key);
     } catch (e) {
-      console.warn('[StorageEngine] IDB getItem failed, falling back to localStorage:', e);
+      console.error('[StorageEngine] IDB getItem failed:', e);
+      window.dispatchEvent(new CustomEvent('gf:storage-error', {
+        detail: { op: 'getItem', key, error: e }
+      }));
+      return null;
     }
-    // ── Tier 3: localStorage ──
-    try { return localStorage.getItem(key); } catch (_) { return null; }
   }
 
   async function removeItem(key) {
@@ -400,6 +395,7 @@ const StorageEngine = (function () {
       } catch (_) {}
     }
     try { await _idbDelete(_DATA_STORE, key); } catch (_) {}
+    // Sweep any stale copy left over from pre-migration localStorage usage
     try { localStorage.removeItem(key); } catch (_) {}
   }
 
@@ -475,6 +471,23 @@ const StorageEngine = (function () {
   } else {
     setTimeout(_init, 0);
   }
+
+  // ── Surface IDB failures as a visible user warning ───────────────────────
+  // Since localStorage is no longer a fallback, a genuine IDB failure means
+  // data was NOT saved.  We fire 'gf:storage-error' from setItem/getItem and
+  // catch it here once so the user is never silently left with lost data.
+  let _storageErrorShown = false;
+  window.addEventListener('gf:storage-error', function (e) {
+    if (_storageErrorShown) return; // show once per session
+    _storageErrorShown = true;
+    const msg = '⚠️ Storage error — your data could not be saved. ' +
+                'Try refreshing, or use the Export button to back up your work.';
+    if (typeof window.toast === 'function') {
+      window.toast(msg, 'error', 10000);
+    } else {
+      console.error('[StorageEngine]', msg, e.detail);
+    }
+  });
 
   return {
     setItem,
