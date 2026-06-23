@@ -10,10 +10,15 @@ const StorageEngine = (function () {
   // ════════════════════════════════════════════════════════════════════════
   //  LAYER 1 — IndexedDB  (primary store for all app data)
   //
-  //  Database : 'gradeflow_db'   version 2
+  //  Database : 'gradeflow_db'   version 3
   //  Stores   :
   //    'data'    — key/value for app data (session, exams, branding)
   //    'handles' — FileSystemDirectoryHandle persistence (unchanged)
+  //
+  //  Version history:
+  //    v1 — original: 'handles' store only
+  //    v2 — added 'data' store (but some deployments created v2 without it)
+  //    v3 — repairs v2 databases that are missing the 'data' store
   //
   //  Why IndexedDB instead of localStorage?
   //    • localStorage is limited to ~5 MB per origin.  A school with many
@@ -26,7 +31,7 @@ const StorageEngine = (function () {
   // ════════════════════════════════════════════════════════════════════════
 
   const _IDB_NAME    = 'gradeflow_db';
-  const _IDB_VERSION = 2;           // bumped from 1 → adds 'data' store
+  const _IDB_VERSION = 3;           // bumped to 3 → repairs missing 'data' store in broken v2 DBs
   const _DATA_STORE  = 'data';      // app data (session / exams / branding)
   const _HDL_STORE   = 'handles';   // dir handle (pre-existing)
 
@@ -49,11 +54,52 @@ const StorageEngine = (function () {
         // 'data' store — new in version 2
         if (!db.objectStoreNames.contains(_DATA_STORE)) {
           db.createObjectStore(_DATA_STORE);
-          console.log('[StorageEngine] IndexedDB upgraded to v2 — data store created.');
+          console.log('[StorageEngine] IndexedDB upgraded to v3 — data store created.');
         }
       };
 
-      req.onsuccess = e => resolve(e.target.result);
+      req.onsuccess = function (e) {
+        const db = e.target.result;
+
+        // ── Post-open validation ─────────────────────────────────────────────
+        // Guard against a specific corruption: the DB is already at the target
+        // version (so onupgradeneeded never fired) but a *previous* deployment
+        // created it without the 'data' store.  Every subsequent transaction on
+        // that store throws NotFoundError, silently destroying all reads/writes.
+        // Fix: close this handle, open one version higher (forcing onupgradeneeded),
+        //      and create any missing stores there.
+        if (!db.objectStoreNames.contains(_DATA_STORE)) {
+          console.warn(
+            '[StorageEngine] DB is at v' + db.version +
+            ' but missing "data" store — repairing at v' + (db.version + 1) + '…'
+          );
+          const repairVer = db.version + 1;
+          db.close();
+
+          const repairPromise = new Promise((res2, rej2) => {
+            const rr = indexedDB.open(_IDB_NAME, repairVer);
+            rr.onupgradeneeded = function (re) {
+              const rdb = re.target.result;
+              if (!rdb.objectStoreNames.contains(_HDL_STORE)) {
+                rdb.createObjectStore(_HDL_STORE);
+              }
+              if (!rdb.objectStoreNames.contains(_DATA_STORE)) {
+                rdb.createObjectStore(_DATA_STORE);
+                console.log('[StorageEngine] Repair complete: data store created at v' + repairVer + '.');
+              }
+            };
+            rr.onsuccess = re => res2(re.target.result);
+            rr.onerror   = re => rej2(re.target.error);
+          });
+
+          // Replace cached promise so future _openDB() calls reuse the repair result
+          _dbPromise = repairPromise;
+          repairPromise.then(resolve).catch(reject);
+          return;
+        }
+
+        resolve(db);
+      };
       req.onerror   = e => {
         console.warn('[StorageEngine] IndexedDB open failed:', e.target.error);
         // Clear the cached promise so future calls can retry rather than
@@ -154,7 +200,8 @@ const StorageEngine = (function () {
   //  (version-2 'handles' store) rather than a separate DB.
   // ════════════════════════════════════════════════════════════════════════
 
-  let _dirHandle = null;
+  let _dirHandle   = null;
+  let _needsReauth = false;  // true when handle is loaded but permission is 'prompt'
 
   function _detectFSASupport() {
     if (!('showDirectoryPicker' in window)) return false;
@@ -218,11 +265,13 @@ const StorageEngine = (function () {
     try {
       const perm = await saved.queryPermission({ mode: 'readwrite' });
       if (perm === 'granted') {
-        _dirHandle = saved;
+        _dirHandle   = saved;
+        _needsReauth = false;
         _updateSaveLocationUI(true);
         return true;
       }
-      _dirHandle = saved;
+      _dirHandle   = saved;
+      _needsReauth = true;   // permission is 'prompt' — user must re-authorize
       _updateSaveLocationUI(false, true);
       return false;
     } catch (_) { return false; }
@@ -258,7 +307,12 @@ const StorageEngine = (function () {
     if (!_dirHandle) return false;
     try {
       const perm = await _dirHandle.requestPermission({ mode: 'readwrite' });
-      if (perm === 'granted') { _updateSaveLocationUI(true); _showFileSaveToast(); return true; }
+      if (perm === 'granted') {
+        _needsReauth = false;
+        _updateSaveLocationUI(true);
+        _showFileSaveToast();
+        return true;
+      }
     } catch (_) {}
     return false;
   }
@@ -285,8 +339,15 @@ const StorageEngine = (function () {
         const perm = await _dirHandle.queryPermission({ mode: 'readwrite' });
         if (perm === 'granted') {
           await _fileSet(key, value);
-          // Mirror to IDB so a reload without folder permission still works
-          try { await _idbSet(_DATA_STORE, key, value); } catch (_) {}
+          // Mirror to IDB so a reload without folder permission still works.
+          // If IDB fails (e.g. data store not yet repaired), fall back to
+          // localStorage as a last-resort bridge — this keeps the session
+          // accessible even if the folder permission lapses on the next load.
+          try {
+            await _idbSet(_DATA_STORE, key, value);
+          } catch (_) {
+            try { localStorage.setItem(key, value); } catch (_2) {}
+          }
           return;
         }
         _updateSaveLocationUI(false, true);
@@ -425,6 +486,7 @@ const StorageEngine = (function () {
     releaseDirectory,
     reauthorize:   _reauthorize,
     updateUI:      _updateSaveLocationUI,
+    needsReauth:   function () { return _needsReauth; },
     _getDirHandle: function () { return _dirHandle; },
   };
 })();

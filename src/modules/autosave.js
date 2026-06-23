@@ -389,11 +389,85 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+// ── Recovery banner: data is in device folder but permission has lapsed ──────
+// Shown when checkForSavedSession() finds no session data but StorageEngine
+// has a restored directory handle that still needs user re-authorization.
+// The user's data is physically on their device — they just need to unlock it.
+function _showFileReauthBanner() {
+  if (document.getElementById('gf-reauth-recovery')) return; // already shown
+
+  const div = document.createElement('div');
+  div.id = 'gf-reauth-recovery';
+  div.style.cssText = [
+    'position:fixed',
+    'bottom:76px',
+    'left:50%',
+    'transform:translateX(-50%)',
+    'background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 100%)',
+    'color:#fff',
+    'padding:14px 18px',
+    'border-radius:14px',
+    'font-size:13.5px',
+    'z-index:9100',
+    'display:flex',
+    'align-items:center',
+    'gap:12px',
+    'box-shadow:0 6px 28px rgba(0,0,0,.45)',
+    'max-width:480px',
+    'width:calc(100vw - 40px)',
+    'box-sizing:border-box',
+  ].join(';');
+
+  div.innerHTML =
+    '<span style="font-size:22px;flex-shrink:0">📁</span>' +
+    '<span style="flex:1;line-height:1.45">' +
+      'Your saved session is on your device.<br>' +
+      '<strong>Unlock folder access</strong> to restore it.' +
+    '</span>' +
+    '<button id="gf-reauth-btn" style="' +
+      'background:#fff;color:#1d4ed8;border:none;border-radius:9px;' +
+      'padding:7px 15px;font-weight:700;font-size:13px;cursor:pointer;' +
+      'white-space:nowrap;flex-shrink:0;' +
+    '">Unlock</button>' +
+    '<button id="gf-reauth-close" style="' +
+      'background:transparent;border:none;color:rgba(255,255,255,.55);' +
+      'font-size:18px;line-height:1;cursor:pointer;padding:4px 2px;flex-shrink:0;' +
+    '" aria-label="Dismiss">✕</button>';
+
+  document.body.appendChild(div);
+
+  document.getElementById('gf-reauth-btn').addEventListener('click', async function () {
+    const ok = await window.StorageEngine.reauthorize();
+    if (ok) {
+      const el = document.getElementById('gf-reauth-recovery');
+      if (el) el.remove();
+      await checkForSavedSession(); // retry now that permission is granted
+    }
+  });
+
+  document.getElementById('gf-reauth-close').addEventListener('click', function () {
+    const el = document.getElementById('gf-reauth-recovery');
+    if (el) el.remove();
+  });
+}
+
 // ── Check for saved session on page load ──
 async function checkForSavedSession() {
   try {
     const raw = await window.StorageEngine.getItem(LS_KEY);
-    if (!raw) return;
+    if (!raw) {
+      // ── File-based session recovery ──────────────────────────────────────
+      // Session data returned null, but if the user previously chose a device
+      // folder and the folder permission has since lapsed (browser requires a
+      // user gesture to re-grant it), the data still exists in the file on
+      // their device — we just can't read it yet.  Show a recovery banner so
+      // they know to click "Unlock" rather than thinking their work is lost.
+      if (typeof window.StorageEngine.needsReauth === 'function' &&
+          window.StorageEngine.needsReauth()) {
+        _showFileReauthBanner();
+      }
+      return;
+    }
     const s = JSON.parse(raw);
     if (!s || !s.savedAt) return;
 
