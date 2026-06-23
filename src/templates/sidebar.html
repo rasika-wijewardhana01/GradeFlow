@@ -1,0 +1,200 @@
+<!-- Sidebar overlay (tablet) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ══════════════════════════════════════════
+     BACKUP & RESTORE MODAL
+     Works on all browsers: Chrome/Edge (folder save),
+     Firefox, iOS Safari (manual JSON export/import).
+══════════════════════════════════════════ -->
+<div class="backup-modal-overlay" id="backupModalOverlay" onclick="if(event.target===this)closeBackupModal()">
+  <div class="backup-modal">
+    <!-- Header -->
+    <div class="backup-modal-header">
+      <div class="backup-modal-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </div>
+      <div class="backup-modal-header-text">
+        <h3>Save to Device</h3>
+        <p>Choose how you want to store your data outside the browser</p>
+      </div>
+      <button class="backup-modal-close" onclick="closeBackupModal()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Body: two option cards -->
+    <div class="backup-modal-body">
+
+      <!-- Option 1: Folder save (Chrome/Edge only) -->
+      <div class="backup-option" id="backupOptionFolder">
+        <div class="backup-option-icon backup-option-icon--folder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        </div>
+        <div class="backup-option-body">
+          <div class="backup-option-title">Auto-save to Folder
+            <span class="backup-option-badge backup-option-badge--chrome">Chrome / Edge</span>
+          </div>
+          <div class="backup-option-desc">Pick a folder on your device. GradeFlow saves automatically every 20 seconds — like a real desktop app. Data survives browser resets.</div>
+        </div>
+        <button class="backup-option-btn backup-option-btn--primary" id="backupFolderBtn" onclick="handleFolderSaveOption()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+          Choose Folder
+        </button>
+      </div>
+
+      <div class="backup-modal-divider"><span>or</span></div>
+
+      <!-- Option 2: Manual JSON backup (all browsers) -->
+      <div class="backup-option">
+        <div class="backup-option-icon backup-option-icon--json">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        </div>
+        <div class="backup-option-body">
+          <div class="backup-option-title">Download Backup File
+            <span class="backup-option-badge backup-option-badge--all">All Browsers</span>
+          </div>
+          <div class="backup-option-desc">Downloads a <code>.json</code> backup of all your exams, marks, and settings. Save it anywhere — Downloads, iCloud Drive, Google Drive. Restore it any time.</div>
+          <div class="backup-last-export" id="backupLastExportLabel">No backup yet</div>
+        </div>
+        <div class="backup-option-actions">
+          <button class="backup-option-btn backup-option-btn--export" onclick="exportBackupFile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+          <button class="backup-option-btn backup-option-btn--import" onclick="importBackupFile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Restore
+          </button>
+        </div>
+      </div>
+
+      <!-- Info tip -->
+      <div class="backup-info-tip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Your data never leaves your device. GradeFlow has no server. Browser storage can be cleared by your browser; a backup file is permanent until you delete it.</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="backup-modal-footer">
+      <button class="btn btn-ghost" onclick="closeBackupModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <!-- Collapse/expand toggle button -->
+  <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebarCollapse()" title="Collapse sidebar">
+    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="sidebar-inner">
+  <div class="sidebar-logo">
+    <div class="logo-icon" style="padding:0;background:none;border-radius:10px;overflow:hidden;width:36px;height:36px;flex-shrink:0;">
+      <img src="data:image/png;base64,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" alt="GradeFlow" width="36" height="36" style="width:36px;height:36px;display:block;border-radius:10px;" />
+    </div>
+    <div class="logo-text">
+      <h2>GradeFlow</h2>
+      <p>Smart grade management</p>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Workflow</div>
+    <!-- Exam chip in sidebar (expanded) -->
+    <div class="sidebar-exam-chip" onclick="openExamManager()" id="sidebarExamChip" title="Manage exams / terms (Ctrl+E)">
+      <!-- Completion ring wrap -->
+      <div class="sec-ring-wrap" id="sidebarExamRingWrap">
+        <svg class="sec-ring-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="sec-ring-track" cx="12" cy="12" r="10.5" fill="none" stroke-width="2"/>
+          <circle class="sec-ring-arc"   cx="12" cy="12" r="10.5" fill="none" stroke-width="2"
+            stroke-dasharray="65.97 65.97" stroke-dashoffset="65.97"
+            id="sidebarRingArc" transform="rotate(-90 12 12)"/>
+        </svg>
+        <svg class="sidebar-exam-chip-icon" viewBox="0 0 24 24" fill="#60a5fa" width="13" height="13"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+      </div>
+      <span class="sidebar-exam-chip-name" id="sidebarExamName">Loading…</span>
+      <svg class="sidebar-exam-chip-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <!-- Exam chip collapsed: ring + icon, centered -->
+    <div class="sidebar-exam-chip-collapsed" id="sidebarExamChipCollapsed" onclick="openExamManager()" title="Manage exams / terms (Ctrl+E)" style="display:none;justify-content:center;align-items:center;margin:4px 0 8px;cursor:pointer;">
+      <span class="sidebar-exam-chip-collapsed-icon">
+        <div class="sec-ring-wrap sec-ring-wrap--lg" id="sidebarExamRingWrapCollapsed">
+          <svg class="sec-ring-svg" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle class="sec-ring-track" cx="16" cy="16" r="13.5" fill="none" stroke-width="2.5"/>
+            <circle class="sec-ring-arc"   cx="16" cy="16" r="13.5" fill="none" stroke-width="2.5"
+              stroke-dasharray="84.82 84.82" stroke-dashoffset="84.82"
+              id="sidebarRingArcCollapsed" transform="rotate(-90 16 16)"/>
+          </svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        </div>
+      </span>
+    </div>
+    <div class="nav-item active" onclick="goToStep(0)" id="nav-0" data-label="Setup">
+      <span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
+      <span>Setup</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(1)" id="nav-1" data-label="Students">
+      <span class="nav-icon-wrap">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 3a2 2 0 110 4 2 2 0 010-4zm4 12H8v-1c0-2.67 5.33-4 8-4v5z"/></svg>
+        <span class="nav-badge-dot" id="badge-dot-students">0</span>
+      </span>
+      <span>Students</span>
+      <span class="nav-badge" id="badge-students">0</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(2)" id="nav-2" data-label="Subjects">
+      <span class="nav-icon-wrap">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1z"/></svg>
+        <span class="nav-badge-dot" id="badge-dot-subjects">0</span>
+      </span>
+      <span>Subjects</span>
+      <span class="nav-badge" id="badge-subjects">0</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(3)" id="nav-3" data-label="Enter Marks">
+      <span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg></span>
+      <span>Enter Marks</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(4)" id="nav-4" data-label="Results">
+      <span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></span>
+      <span>Results</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(5)" id="nav-5" data-label="Analytics">
+      <span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg></span>
+      <span>Analytics</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(0);setTimeout(function(){openBrandingSetupCard();},80);" id="nav-branding" data-label="School Branding" title="School Branding" style="position:relative;">
+      <span class="nav-icon-wrap" style="position:relative;">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor" style="color:#a78bfa;opacity:0.85;"><path d="M12 3L1 9l4 2.18V18h14v-6.82L23 9zm6 13H6v-5.4l6 3.27 6-3.27V16zm-6-5L3.78 9 12 4.82 20.22 9z"/></svg>
+        <span id="brandingActiveDot" style="position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:#a78bfa;display:none;border:1.5px solid #0f172a;"></span>
+      </span>
+      <span>School Branding</span>
+    </div>
+  </nav>
+  <div class="sidebar-footer" id="sidebarFooter">
+    <div class="dark-mode-toggle" id="darkModeToggle" onclick="toggleDarkMode(event)" title="Toggle dark mode">
+      <div class="dark-mode-toggle-left">
+        <svg id="dmIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <span id="dmLabel">Dark mode</span>
+      </div>
+      <div class="dm-switch" id="dmSwitch"></div>
+    </div>
+    <!-- Collapsed footer: icon-only theme toggle -->
+    <div class="sidebar-footer-icon-btn" id="dmIconBtn" onclick="toggleDarkMode(event)" data-label="Toggle dark mode" title="Toggle dark mode">
+      <svg id="dmIconCollapsed" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </div>
+    <div class="sidebar-footer-text" style="font-size:12px;color:#475569;line-height:1.5;">GradeFlow</div>
+    <div class="gf-legal-links">
+      <a href="#" onclick="openLegalModal('privacy');return false;" title="Privacy Policy">Privacy</a>
+      <a href="#" onclick="openLegalModal('terms');return false;" title="Terms of Service">Terms</a>
+    </div>
+  </div>
+  </div><!-- end sidebar-inner -->
+</aside>
+

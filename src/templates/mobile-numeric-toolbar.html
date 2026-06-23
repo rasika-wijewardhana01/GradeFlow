@@ -1,0 +1,40 @@
+<!-- ══ Mobile Numeric Entry Toolbar ══ -->
+<div class="mobile-num-toolbar" id="mobileNumToolbar" role="toolbar" aria-label="Numeric entry toolbar">
+  <div class="mnt-student-label">
+    Student: <span id="mntStudentName">—</span>
+    <button onclick="hideMobileToolbar()" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;" aria-label="Close toolbar">✕</button>
+  </div>
+  <div class="mnt-subject-label">
+    <span id="mntSubjectName">Subject</span>
+    <span class="mnt-max" id="mntSubjectMax">/ —</span>
+  </div>
+  <div class="mnt-display">
+    <div class="mnt-display-val" id="mntDisplayVal">—</div>
+    <div class="mnt-display-hint" id="mntDisplayHint">Type a mark</div>
+  </div>
+  <div class="mnt-numpad">
+    <button class="mnt-btn" onclick="mntDigit('7')">7</button>
+    <button class="mnt-btn" onclick="mntDigit('8')">8</button>
+    <button class="mnt-btn" onclick="mntDigit('9')">9</button>
+    <button class="mnt-btn mnt-action" onclick="mntPrevStudent()">▲ Prev</button>
+
+    <button class="mnt-btn" onclick="mntDigit('4')">4</button>
+    <button class="mnt-btn" onclick="mntDigit('5')">5</button>
+    <button class="mnt-btn" onclick="mntDigit('6')">6</button>
+    <button class="mnt-btn mnt-action" onclick="mntNextStudent()">▼ Next</button>
+
+    <button class="mnt-btn" onclick="mntDigit('1')">1</button>
+    <button class="mnt-btn" onclick="mntDigit('2')">2</button>
+    <button class="mnt-btn" onclick="mntDigit('3')">3</button>
+    <button class="mnt-btn mnt-nav" onclick="mntPrevSubject()">◀</button>
+
+    <button class="mnt-btn mnt-clear" onclick="mntClear()">⌫</button>
+    <button class="mnt-btn" onclick="mntDigit('0')">0</button>
+    <button class="mnt-btn mnt-confirm" onclick="mntConfirm()">✓</button>
+    <button class="mnt-btn mnt-nav" onclick="mntNextSubject()">▶</button>
+  </div>
+  <div class="mnt-progress">
+    <span id="mntProgressLabel" style="white-space:nowrap;"></span>
+    <div class="mnt-progress-bar"><div class="mnt-progress-fill" id="mntProgressFill"></div></div>
+  </div>
+</div>

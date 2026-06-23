@@ -1,0 +1,13 @@
+{
+  "name": "gradeflow",
+  "version": "1.0.0",
+  "description": "GradeFlow — Smart grade & marks management",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.0.14"
+  }
+}

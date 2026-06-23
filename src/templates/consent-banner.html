@@ -1,0 +1,25 @@
+<!-- ══ Cookie / Storage Consent Banner ══ -->
+<div id="gfConsentBanner" role="dialog" aria-label="Storage consent" aria-live="polite">
+  <div class="gf-consent-inner">
+    <div class="gf-consent-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div class="gf-consent-body">
+      <div class="gf-consent-title">This app stores data on your device</div>
+      <div class="gf-consent-text">
+        GradeFlow uses <strong style="color:#e2e8f0;">local storage</strong> to save your session, marks, and preferences — nothing leaves your device. On Chrome/Edge you can optionally save to a <strong style="color:#e2e8f0;">device folder</strong> instead. No tracking or external cookies are used. See our <a href="#" onclick="openLegalModal('privacy');return false;">Privacy Policy</a> and <a href="#" onclick="openLegalModal('terms');return false;">Terms of Service</a>.
+      </div>
+    </div>
+    <div class="gf-consent-actions">
+      <button class="gf-btn-accept" onclick="gfConsentAccept()">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Got it
+      </button>
+      <button class="gf-btn-decline" onclick="gfConsentDecline()">Decline</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PASS MARK & GRADING PANEL — Keyboard + Mobile Navigation
+     ══════════════════════════════════════════════════════════ -->

@@ -1,0 +1,70 @@
+#gf-install-banner,
+#gf-update-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  z-index: 99990;
+  width: calc(100% - 32px);
+  max-width: 480px;
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, #e5e7eb);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+  transition: transform 0.38s cubic-bezier(0.34,1.2,0.64,1), opacity 0.38s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+#gf-install-banner.visible,
+#gf-update-banner.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.gf-ib-inner {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+}
+.gf-ib-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  flex-shrink: 0; object-fit: contain;
+}
+.gf-ib-update-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: #1a56db; color: white; font-size: 22px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.gf-ib-text {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+}
+.gf-ib-text strong {
+  font-size: 14px; font-weight: 700; color: var(--text, #111827); display: block;
+}
+.gf-ib-text span {
+  font-size: 12px; color: var(--text-muted, #6b7280);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gf-ib-btn {
+  border: none; cursor: pointer; font-size: 13px; font-weight: 600;
+  border-radius: 9px; transition: background 0.15s, color 0.15s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.gf-ib-btn.install { background: #1a56db; color: #ffffff; padding: 9px 18px; }
+.gf-ib-btn.install:hover { background: #1040b0; }
+.gf-ib-btn.dismiss {
+  background: transparent; color: var(--text-muted, #6b7280);
+  padding: 8px; font-size: 14px; border-radius: 7px;
+}
+.gf-ib-btn.dismiss:hover { background: var(--bg, #f8fafc); color: var(--text, #111827); }
+[data-theme="dark"] #gf-install-banner,
+[data-theme="dark"] #gf-update-banner {
+  background: #2d3748; border-color: #4a5568;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .gf-ib-text strong { color: #e2e8f0; }
+[data-theme="dark"] .gf-ib-text span   { color: #a0aec0; }
+[data-theme="dark"] .gf-ib-btn.dismiss { color: #a0aec0; }
+[data-theme="dark"] .gf-ib-btn.dismiss:hover { background: #374151; color: #e2e8f0; }
+@media (max-width: 420px) {
+  .gf-ib-text span { display: none; }
+  .gf-ib-btn.install { padding: 9px 14px; }
+}

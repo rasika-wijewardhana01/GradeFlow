@@ -1,0 +1,25 @@
+/* ═══════════════════════════════════════════════════════════════
+   GradeFlow — Main CSS Entry Point
+   Imports all CSS modules in dependency order.
+   Vite bundles these into a single optimised stylesheet.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Splash screen (must load first — visible before app JS) ── */
+@import './splash.css';
+
+/* ── Core application styles ── */
+@import '../style.css';
+
+/* ── Feature-specific styles ── */
+@import './autocomplete.css';
+@import './marks-stepper.css';
+@import './pwa-banner.css';
+@import './consent.css';
+@import './keyboard-help.css';
+@import './swipe.css';
+@import './tour.css';
+@import './feedback.css';
+@import './save-location-prompt.css';
+
+/* ── Motion & Depth System v2 — must load last (overrides keyframes) ── */
+@import './styles/motion.css';

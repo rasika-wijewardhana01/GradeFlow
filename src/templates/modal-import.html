@@ -1,0 +1,90 @@
+<!-- ── CSV / Excel Import Modal ── -->
+<div class="share-modal-overlay" id="importModalOverlay" onclick="if(event.target===this)closeImportModal()">
+  <div class="share-modal" id="importModal" style="max-width:680px;">
+    <div class="share-modal-header">
+      <div>
+        <h3>Import Marks from CSV / Excel</h3>
+        <p>Upload a file — columns are auto-mapped to subjects, out-of-range values are flagged before import</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeImportModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+    <div class="share-modal-body" id="importModalBody">
+
+      <!-- Step A: Upload zone -->
+      <div id="imp-step-upload">
+        <div id="imp-drop-zone"
+          onclick="document.getElementById('imp-file-input').click()"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="event.preventDefault();this.classList.remove('drag-over');handleImportFileDrop(event)"
+          style="border:2.5px dashed var(--import-drop-border);border-radius:14px;padding:36px 20px;text-align:center;cursor:pointer;background:var(--import-drop-bg);transition:all 0.2s;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5" width="44" height="44" style="margin:0 auto 12px;display:block;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div style="font-size:14px;font-weight:700;color:var(--primary);margin-bottom:4px;">Drop your file here, or click to browse</div>
+          <div style="font-size:12px;color:var(--text-muted);">Supports CSV (.csv) and Excel (.xlsx / .xls)</div>
+          <input type="file" id="imp-file-input" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleImportFileSelect(event)" />
+        </div>
+
+        <div style="margin-top:16px;background:var(--import-tip-bg);border:1px solid var(--import-tip-border);border-radius:10px;padding:12px 14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--import-tip-title);margin-bottom:6px;display:flex;align-items:center;gap:5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="flex-shrink:0;"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>Expected file format</div>
+          <div style="font-size:12px;color:var(--import-tip-body);line-height:1.6;">
+            Your file should have one row per student. Columns can include <strong>Student Name</strong> (or Index No.), then one column per subject.
+            Column headers are matched to your subject names automatically — even fuzzy matches work!<br>
+            Partial uploads are supported: any subjects not in the file can be entered manually.
+          </div>
+          <button onclick="downloadImportTemplate()" class="btn btn-ghost btn-sm" style="margin-top:10px;border-color:var(--import-tip-border);color:var(--import-tip-title);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download template for current subjects
+          </button>
+        </div>
+      </div>
+
+      <!-- Step B: Column mapping -->
+      <div id="imp-step-mapping" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <div style="background:var(--import-map-bg);border:1px solid var(--import-map-border);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--import-map-fg);">
+            ✓ File loaded: <span id="imp-file-name-label"></span>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="resetImport()">Change file</button>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Column Mapping</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:10px;">
+          Auto-mapped columns are shown in green. Review and correct any mismatches before previewing.
+        </div>
+        <div id="imp-mapping-table" style="border:1px solid var(--border);border-radius:10px;overflow:hidden;"></div>
+        <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="resetImport()">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="runImportPreview()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Preview import
+          </button>
+        </div>
+      </div>
+
+      <!-- Step C: Preview & confirm -->
+      <div id="imp-step-preview" style="display:none;">
+        <div id="imp-preview-stats" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"></div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Preview — scroll to review</div>
+        <div id="imp-preview-table-wrap" style="overflow-x:auto;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;"></div>
+        <div id="imp-warnings" style="margin-top:10px;display:none;"></div>
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="imp-overwrite-chk" checked style="accent-color:var(--primary);" />
+            <label for="imp-overwrite-chk" style="font-size:13px;font-weight:600;cursor:pointer;">Overwrite existing marks</label>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" onclick="showImportStep('mapping')">← Back to mapping</button>
+            <button class="btn btn-success btn-sm" onclick="confirmImport()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M9 11l3 3L22 4"/></svg>
+              Confirm import
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+

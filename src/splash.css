@@ -1,0 +1,280 @@
+
+/* ── Splash root ── */
+#gf-splash {
+  position: fixed; inset: 0; z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  overflow: hidden;
+  background: #05081a;
+}
+
+/* ══ EDUCATIONAL BACKGROUND LAYERS ══ */
+
+/* 1. Deep space gradient base */
+.gfe-base {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 100% 60% at 15% 0%,   rgba(15,23,60,0.95)  0%, transparent 70%),
+    radial-gradient(ellipse 80%  70% at 85% 100%,  rgba(5,35,30,0.7)    0%, transparent 65%),
+    radial-gradient(ellipse 60%  80% at 90% 10%,   rgba(35,10,70,0.4)   0%, transparent 60%),
+    radial-gradient(ellipse 140% 100% at 50% 50%,  #060c22              0%, transparent 100%);
+}
+
+/* 2. Ruled notebook lines — horizontal, subtle */
+.gfe-ruled {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 31px,
+      rgba(59,130,246,0.04) 31px,
+      rgba(59,130,246,0.04) 32px
+    ),
+    /* vertical margin line — single, left side */
+    linear-gradient(
+      90deg,
+      transparent 68px,
+      rgba(220,100,100,0.06) 68px,
+      rgba(220,100,100,0.06) 69px,
+      transparent 69px
+    );
+  animation: gfeRuledDrift 40s linear infinite;
+}
+@keyframes gfeRuledDrift {
+  0%   { background-position: 0 0,    0 0; }
+  100% { background-position: 0 32px, 0 0; }
+}
+
+/* 3. Main canvas */
+#gfeCanvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+/* 3b. Aurora frost — soft blur veil over the aurora waves,
+        sits between the canvas and the symbol layer so symbols
+        appear sharp and readable above the diffused glow */
+.gfe-aurora-frost {
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  backdrop-filter: blur(32px) brightness(0.82) saturate(1.3);
+  -webkit-backdrop-filter: blur(32px) brightness(0.82) saturate(1.3);
+  /* Tinted glass that lets aurora colour bleed through while muting harshness */
+  background: rgba(5, 8, 26, 0.38);
+  /* Edge-to-centre gradient so blur is strongest at edges, fades near centre */
+  -webkit-mask-image: radial-gradient(ellipse 95% 95% at 50% 50%,
+    rgba(0,0,0,1) 0%,
+    rgba(0,0,0,0.9) 50%,
+    rgba(0,0,0,0.6) 80%,
+    rgba(0,0,0,0) 100%);
+  mask-image: radial-gradient(ellipse 95% 95% at 50% 50%,
+    rgba(0,0,0,1) 0%,
+    rgba(0,0,0,0.9) 50%,
+    rgba(0,0,0,0.6) 80%,
+    rgba(0,0,0,0) 100%);
+}
+
+/* 4. Floating edu symbols container — sits above the frost layer */
+.gfe-symbols {
+  position: absolute; inset: 0; z-index: 2;
+  pointer-events: none; overflow: hidden;
+}
+.gfe-sym {
+  position: absolute;
+  font-size: var(--sz, 22px);
+  color: var(--col, #3b82f6);
+  opacity: var(--op, 0.07);
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', Georgia, serif;
+  user-select: none;
+  animation: gfeSymFloat var(--dur, 9s) ease-in-out var(--del, 0s) infinite;
+  transform: rotate(var(--rot, 0deg));
+  /* Single subtle halo — readable without blazing */
+  text-shadow: 0 0 10px var(--col, #3b82f6);
+  letter-spacing: -0.5px;
+}
+@keyframes gfeSymFloat {
+  0%,100% {
+    transform: rotate(var(--rot,0deg)) translateY(0px);
+    opacity: calc(var(--op, 0.07) * 3.2);
+  }
+  50% {
+    transform: rotate(var(--rot,0deg)) translateY(-14px);
+    opacity: calc(var(--op, 0.07) * 4.2);
+  }
+}
+
+/* 5. Scan-lines */
+.gfe-scanlines {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.018;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.4) 2px,
+    rgba(0,0,0,0.4) 4px
+  );
+}
+
+/* 6. Grain */
+.gfe-grain {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* 7. Vignette — strong edges, transparent centre */
+.gfe-vignette {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 80% at 50% 50%, transparent 25%, rgba(5,8,26,0.7) 75%, rgba(5,8,26,0.94) 100%);
+}
+
+/* ── Corner bracket accents ── */
+.gfe-corner {
+  position: absolute; width: 50px; height: 50px; pointer-events: none;
+  opacity: 0.22;
+}
+.gfe-tl { top: 20px;    left: 20px;    border-top: 1.5px solid #3b82f6; border-left: 1.5px solid #3b82f6; }
+.gfe-tr { top: 20px;    right: 20px;   border-top: 1.5px solid #8b5cf6; border-right: 1.5px solid #8b5cf6; }
+.gfe-bl { bottom: 20px; left: 20px;    border-bottom: 1.5px solid #10b981; border-left: 1.5px solid #10b981; }
+.gfe-br { bottom: 20px; right: 20px;   border-bottom: 1.5px solid #f59e0b; border-right: 1.5px solid #f59e0b; }
+
+/* ══ GLASS CARD (carried over from v4) ══ */
+.gfp-card {
+  position: relative; z-index: 10;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 18px;
+  background: rgba(255,255,255,0.032);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 28px;
+  padding: 40px 44px 36px;
+  width: min(420px, 90vw);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow:
+    0 0 0 1px rgba(59,130,246,0.09),
+    0 32px 80px rgba(0,0,0,0.6),
+    0 0 140px rgba(59,130,246,0.07),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+  animation: gfpCardIn 0.75s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes gfpCardIn {
+  0%   { opacity:0; transform:scale(0.86) translateY(28px); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
+}
+.gfp-icon-row { display:flex; align-items:center; justify-content:center; }
+.gfp-icon-wrap {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 112px; height: 112px;
+}
+.gfp-icon-ring { position: absolute; border-radius: 50%; pointer-events: none; }
+.gfp-ring-a {
+  width: 108px; height: 108px;
+  border: 1px dashed rgba(96,165,250,0.22);
+  animation: gfpSpinCW 14s linear infinite;
+}
+.gfp-ring-b {
+  width: 130px; height: 130px;
+  border: 1px solid rgba(139,92,246,0.13);
+  animation: gfpSpinCCW 10s linear infinite;
+}
+.gfp-icon-halo {
+  position: absolute; width: 90px; height: 90px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%);
+  animation: gfpHaloPulse 3s ease-in-out infinite;
+}
+@keyframes gfpHaloPulse { 0%,100%{transform:scale(0.85);opacity:0.5} 50%{transform:scale(1.2);opacity:1} }
+.gfp-icon-img {
+  position: relative; z-index:2;
+  width: 80px; height: 80px; border-radius: 20px;
+  box-shadow: 0 0 0 1px rgba(96,165,250,0.3), 0 0 30px rgba(59,130,246,0.45), 0 12px 40px rgba(0,0,0,0.65);
+  animation: gfpIconGlow 3s ease-in-out infinite 0.5s;
+}
+@keyframes gfpIconGlow {
+  0%,100%{box-shadow:0 0 0 1px rgba(96,165,250,0.3),0 0 30px rgba(59,130,246,0.45),0 12px 40px rgba(0,0,0,0.65)}
+  50%{box-shadow:0 0 0 2px rgba(96,165,250,0.5),0 0 55px rgba(59,130,246,0.75),0 12px 40px rgba(0,0,0,0.65)}
+}
+@keyframes gfpSpinCW  { to { transform: rotate(360deg); } }
+@keyframes gfpSpinCCW { to { transform: rotate(-360deg); } }
+.gfp-greeting {
+  font-size: 15px; font-weight: 500; letter-spacing: 0.3px;
+  color: rgba(203,213,225,0.95); min-height: 22px; line-height: 1.5;
+  text-shadow: 0 1px 8px rgba(96,165,250,0.18);
+  animation: gfpFadeIn 0.5s ease 0.4s both;
+}
+@keyframes gfpFadeIn { from{opacity:0} to{opacity:1} }
+.gfp-brand { display:flex; align-items:center; gap:10px; animation:gfpRiseIn 0.6s ease 0.3s both; opacity:0; }
+.gfp-brand-text {
+  font-size: 38px; font-weight: 800; letter-spacing: -2px; line-height: 1;
+  background: linear-gradient(130deg, #f1f5f9 0%, #bfdbfe 40%, #60a5fa 70%, #a5b4fc 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.gfp-brand-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: 2px; color: #3b82f6;
+  background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3);
+  border-radius: 6px; padding: 3px 7px; margin-top: -14px; align-self: flex-start;
+}
+.gfp-tagline-wrap {
+  display:flex; align-items:center; gap:1px; min-height:20px;
+  animation: gfpRiseIn 0.5s ease 0.5s both; opacity:0;
+}
+.gfp-tagline { font-size:12px; font-weight:500; letter-spacing:2.5px; text-transform:uppercase; color:rgba(100,116,139,0.8); }
+.gfp-cursor  { font-size:14px; font-weight:300; color:#3b82f6; animation:gfpBlink 0.85s step-end infinite; }
+@keyframes gfpBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+.gfp-divider {
+  width:100%; height:1px;
+  background: linear-gradient(90deg, transparent, rgba(96,165,250,0.2), transparent);
+  animation: gfpRiseIn 0.4s ease 0.7s both; opacity:0;
+}
+.gfp-memory {
+  width:100%;
+  display:flex; align-items:center; justify-content:center;
+  animation: gfpRiseIn 0.5s ease 0.75s both; opacity:0;
+}
+.gfp-stats { display:flex; gap:0; width:100%; }
+.gfp-stat {
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+  padding:10px 6px; border-right:1px solid rgba(255,255,255,0.05);
+}
+.gfp-stat:last-child { border-right:none; }
+.gfp-stat-val {
+  font-size:20px; font-weight:700; line-height:1;
+  background:linear-gradient(135deg,#f8fafc,#93c5fd);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.gfp-stat-label { font-size:9px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:rgba(100,116,139,0.7); }
+.gfp-features { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; }
+.gfp-fpill { font-size:10px; font-weight:600; letter-spacing:0.4px; border-radius:99px; padding:4px 12px; }
+.gfp-fpill-b { color:#93c5fd; background:rgba(59,130,246,0.1);  border:1px solid rgba(59,130,246,0.22); }
+.gfp-fpill-p { color:#c4b5fd; background:rgba(139,92,246,0.1);  border:1px solid rgba(139,92,246,0.22); }
+.gfp-fpill-g { color:#6ee7b7; background:rgba(16,185,129,0.1);  border:1px solid rgba(16,185,129,0.22); }
+.gfp-fpill-a { color:#fcd34d; background:rgba(245,158,11,0.1);  border:1px solid rgba(245,158,11,0.22); }
+.gfp-loading {
+  width:100%; display:flex; flex-direction:column; align-items:center; gap:9px;
+  animation: gfpRiseIn 0.4s ease 0.9s both; opacity:0;
+}
+.gfp-bar-track { width:100%; height:2.5px; background:rgba(255,255,255,0.05); border-radius:99px; overflow:hidden; }
+.gfp-bar-fill {
+  height:100%; width:0%;
+  background: linear-gradient(90deg,#1d4ed8,#3b82f6,#8b5cf6,#93c5fd);
+  background-size:200% 100%; border-radius:99px;
+  animation: gfpBarLoad 2.2s cubic-bezier(0.25,0.46,0.45,0.94) 0.9s both,
+             gfpBarShift 2s linear 0.9s infinite;
+  box-shadow:0 0 10px rgba(96,165,250,0.6);
+}
+@keyframes gfpBarLoad { 0%{width:0%} 45%{width:60%} 75%{width:82%} 92%{width:94%} 100%{width:100%} }
+@keyframes gfpBarShift { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+.gfp-status { font-size:10px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; color:rgba(100,116,139,0.6); }
+@keyframes gfpRiseIn { 0%{opacity:0;transform:translateY(12px)} 100%{opacity:1;transform:translateY(0)} }
+
+/* ── Exit ── */
+@keyframes gfpSplashOut {
+  0%   { opacity:1; transform:scale(1);    filter:blur(0px); }
+  100% { opacity:0; transform:scale(1.04); filter:blur(5px); }
+}
+#gf-splash.gfp-exit {
+  animation: gfpSplashOut 0.65s cubic-bezier(0.4,0,0.2,1) forwards;
+  pointer-events: none;
+}

@@ -1,0 +1,64 @@
+/* ═══════════════════════════════════════════════════════════════
+   src/save-location-prompt.css
+   "Set up a save location" nudge banner.
+   Reuses .gf-ib-* classes from pwa-banner.css for visual consistency.
+═══════════════════════════════════════════════════════════════ */
+
+#gf-save-location-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  z-index: 99985; /* just below install/update banners */
+  width: calc(100% - 32px);
+  max-width: 520px;
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, #e5e7eb);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+  transition: transform 0.38s cubic-bezier(0.34,1.2,0.64,1), opacity 0.38s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+#gf-save-location-banner.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gf-sl-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  flex-shrink: 0;
+  background: rgba(34,197,94,0.12);
+  color: #16a34a;
+  display: flex; align-items: center; justify-content: center;
+}
+.gf-sl-icon svg { width: 22px; height: 22px; }
+
+.gf-sl-footer {
+  padding: 0 16px 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+.gf-sl-footer a {
+  font-size: 11.5px;
+  color: var(--text-muted, #6b7280);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+.gf-sl-footer a:hover { color: var(--text, #111827); text-decoration: underline; }
+
+[data-theme="dark"] #gf-save-location-banner {
+  background: #2d3748; border-color: #4a5568;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .gf-sl-icon { background: rgba(34,197,94,0.18); color: #4ade80; }
+[data-theme="dark"] .gf-sl-footer a { color: #a0aec0; }
+[data-theme="dark"] .gf-sl-footer a:hover { color: #e2e8f0; }
+
+@media (max-width: 420px) {
+  #gf-save-location-banner .gf-ib-text span { display: none; }
+  #gf-save-location-banner .gf-ib-btn.install { padding: 9px 14px; }
+  .gf-sl-footer { padding: 0 16px 12px; }
+}

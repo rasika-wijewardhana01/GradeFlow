@@ -1,0 +1,58 @@
+/* ── Swipe edge-glow indicators ── */
+.swipe-edge-indicator {
+  position: fixed;
+  top: 0;
+  width: 48px;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  border-radius: 0;
+}
+.swipe-edge-indicator.left  { left: 0;  background: linear-gradient(to right, rgba(var(--primary-rgb, 99,102,241), 0.22), transparent); }
+.swipe-edge-indicator.right { right: 0; background: linear-gradient(to left,  rgba(var(--primary-rgb, 99,102,241), 0.22), transparent); }
+.swipe-edge-indicator.visible { opacity: 1; }
+
+/* ── Section slide-in/out animation on swipe navigation ── */
+@media (max-width: 767px) {
+  .section {
+    animation: none !important; /* override the existing fadeIn — we handle it below */
+  }
+  .section.swipe-enter-left  { animation: swipeEnterFromLeft  0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+  .section.swipe-enter-right { animation: swipeEnterFromRight 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+}
+
+@keyframes swipeEnterFromLeft {
+  from { transform: translateX(-28px); opacity: 0.4; }
+  to   { transform: translateX(0);     opacity: 1;   }
+}
+@keyframes swipeEnterFromRight {
+  from { transform: translateX(28px);  opacity: 0.4; }
+  to   { transform: translateX(0);     opacity: 1;   }
+}
+
+/* ── Swipe hint arrows shown briefly at bottom of screen (first 2 sessions) ── */
+.swipe-hint {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); /* above bottom nav */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10000;
+  white-space: nowrap;
+  transition: opacity 0.3s ease;
+}
+.swipe-hint.visible { opacity: 1; }
+.swipe-hint svg { width: 14px; height: 14px; flex-shrink: 0; }

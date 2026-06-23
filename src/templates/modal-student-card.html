@@ -1,0 +1,65 @@
+<!-- ══ INDIVIDUAL STUDENT REPORT CARD MODAL ══ -->
+<div class="sc-modal-overlay" id="scModalOverlay" onclick="if(event.target===this)closeStudentCardModal()">
+  <div class="sc-modal" role="dialog" aria-modal="true" aria-labelledby="scModalTitle">
+
+    <div class="sc-modal-header">
+      <div>
+        <h3 id="scModalTitle">Student Report Card</h3>
+        <p>Individual PDF card — one page per student with branding, grade & subject bars</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeStudentCardModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="sc-modal-body">
+      <!-- Student selector -->
+      <div class="sc-selector">
+        <select id="scStudentSelect" onchange="renderStudentCard()">
+          <option value="">Select a student…</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="scNav(-1)" title="Previous student">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="scNav(1)" title="Next student">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- Live preview of the card -->
+      <div id="scCardPreview" class="sc-card-preview" style="display:none;">
+        <!-- JS-rendered -->
+      </div>
+
+      <div id="scEmptyState" style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" style="color:var(--border);margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Select a student above to preview their card
+      </div>
+
+      <!-- ZIP progress bar -->
+      <div id="scZipProgress" class="sc-zip-progress">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          <span id="scZipProgressText">Generating PDFs…</span>
+        </div>
+        <div style="background:rgba(26,86,219,0.15);border-radius:99px;height:6px;overflow:hidden;">
+          <div id="scZipProgressBar" style="height:100%;background:#1a56db;border-radius:99px;width:0%;transition:width 0.3s;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc-modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeStudentCardModal()">Close</button>
+      <button class="btn btn-ghost btn-sm" id="scDownloadOneBtn" onclick="exportOneStudentCard()" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export this card
+      </button>
+      <button class="btn btn-primary btn-sm" id="scDownloadAllBtn" onclick="exportAllStudentCards()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export all as ZIP
+      </button>
+    </div>
+
+  </div>
+</div>
+

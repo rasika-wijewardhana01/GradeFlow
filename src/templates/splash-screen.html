@@ -1,0 +1,80 @@
+<!-- ══════════════════════════════════════════════════════════════
+     GRADEFLOW — THE PREMIUM DASHBOARD  v5.0
+     Educational Background · Aurora Waves · Typing Cursor · Progress Memory
+     Background layers:
+       1. Deep space gradient base
+       2. Ruled notebook lines (CSS)
+       3. SVG educational symbols (static, scattered)
+       4. Canvas: aurora waves + floating chalk dust + drifting symbols
+       5. Soft vignette + grain
+       6. Glass card (foreground)
+═══════════════════════════════════════════════════════════════ -->
+<div id="gf-splash">
+
+  <!-- BG Layer 1: Deep gradient base -->
+  <div class="gfe-base"></div>
+
+  <!-- BG Layer 2: Ruled notebook lines -->
+  <div class="gfe-ruled"></div>
+
+  <!-- BG Layer 3: Canvas — aurora + dust + symbols -->
+  <canvas id="gfeCanvas"></canvas>
+
+  <!-- BG Layer 3b: Aurora frost — blurs aurora waves, makes symbols pop -->
+  <div class="gfe-aurora-frost"></div>
+
+  <!-- BG Layer 4: SVG floating educational icons (CSS animated) -->
+  <div class="gfe-symbols" id="gfeSymbols"></div>
+
+  <!-- BG Layer 5: Soft scan-line overlay -->
+  <div class="gfe-scanlines"></div>
+
+  <!-- BG Layer 6: Grain -->
+  <div class="gfe-grain"></div>
+
+  <!-- BG Layer 7: Vignette — edges dark, centre clear -->
+  <div class="gfe-vignette"></div>
+
+  <!-- ── Glass card (same as v4, untouched) ── -->
+  <div class="gfp-card" id="gfpCard">
+
+    <div class="gfp-icon-row">
+      <div class="gfp-icon-wrap">
+        <div class="gfp-icon-ring gfp-ring-a"></div>
+        <div class="gfp-icon-ring gfp-ring-b"></div>
+        <div class="gfp-icon-halo"></div>
+        <img id="gfpIcon" class="gfp-icon-img" src="icons/icon_1024.png" alt="GradeFlow"/>
+      </div>
+    </div>
+
+    <div class="gfp-greeting" id="gfpGreeting"></div>
+
+    <div class="gfp-brand">
+      <span class="gfp-brand-text">GradeFlow</span>
+      <span class="gfp-brand-badge">PRO</span>
+    </div>
+
+    <div class="gfp-tagline-wrap">
+      <span class="gfp-tagline" id="gfpTagline"></span><span class="gfp-cursor" id="gfpCursor">|</span>
+    </div>
+
+    <div class="gfp-divider"></div>
+
+    <div class="gfp-memory" id="gfpMemory"></div>
+
+    <div class="gfp-loading">
+      <div class="gfp-bar-track">
+        <div class="gfp-bar-fill" id="gfpBarFill"></div>
+      </div>
+      <span class="gfp-status" id="gfpStatus">Loading…</span>
+    </div>
+
+  </div>
+
+  <!-- Corner bracket decorations -->
+  <div class="gfe-corner gfe-tl"></div>
+  <div class="gfe-corner gfe-tr"></div>
+  <div class="gfe-corner gfe-bl"></div>
+  <div class="gfe-corner gfe-br"></div>
+
+</div>

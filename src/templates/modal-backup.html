@@ -1,0 +1,128 @@
+<!-- ══════════════════════════════════════════
+     LEGAL MODAL (Privacy Policy & Terms of Service)
+     Shown inline — no new tab, no session restore trigger.
+══════════════════════════════════════════ -->
+<div class="legal-modal-overlay" id="legalModalOverlay" onclick="if(event.target===this)closeLegalModal()">
+  <div class="legal-modal">
+    <div class="legal-modal-header">
+      <div class="legal-modal-title-row">
+        <div class="legal-modal-icon">
+          <svg id="legalModalIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3 id="legalModalTitle">Privacy Policy</h3>
+      </div>
+      <div class="legal-modal-tabs">
+        <button class="legal-tab active" id="legalTabPrivacy" onclick="switchLegalTab('privacy')">Privacy Policy</button>
+        <button class="legal-tab" id="legalTabTerms" onclick="switchLegalTab('terms')">Terms of Service</button>
+      </div>
+      <button class="legal-modal-close" onclick="closeLegalModal()" title="Close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="legal-modal-body" id="legalModalBody">
+      <!-- Content injected by openLegalModal() / switchLegalTab() -->
+    </div>
+    <div class="legal-modal-footer">
+      <span class="legal-modal-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" style="vertical-align:middle;margin-right:4px;flex-shrink:0;">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        GradeFlow stores all data locally on your device. Nothing is sent to any server.
+      </span>
+      <button class="btn btn-primary btn-sm" onclick="closeLegalModal()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar overlay (tablet) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ══════════════════════════════════════════
+     BACKUP & RESTORE MODAL
+     Works on all browsers: Chrome/Edge (folder save),
+     Firefox, iOS Safari (manual JSON export/import).
+══════════════════════════════════════════ -->
+<div class="backup-modal-overlay" id="backupModalOverlay" onclick="if(event.target===this)closeBackupModal()">
+  <div class="backup-modal">
+    <!-- Header -->
+    <div class="backup-modal-header">
+      <div class="backup-modal-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </div>
+      <div class="backup-modal-header-text">
+        <h3>Save to Device</h3>
+        <p>Choose how you want to store your data outside the browser</p>
+      </div>
+      <button class="backup-modal-close" onclick="closeBackupModal()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Body: two option cards -->
+    <div class="backup-modal-body">
+
+      <!-- Option 1: Folder save (Chrome/Edge only) -->
+      <div class="backup-option" id="backupOptionFolder">
+        <div class="backup-option-icon backup-option-icon--folder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        </div>
+        <div class="backup-option-body">
+          <div class="backup-option-title">Auto-save to Folder
+            <span class="backup-option-badge backup-option-badge--chrome">Chrome / Edge</span>
+          </div>
+          <div class="backup-option-desc">Pick a folder on your device. GradeFlow saves automatically every 20 seconds — like a real desktop app. Data survives browser resets.</div>
+        </div>
+        <button class="backup-option-btn backup-option-btn--primary" id="backupFolderBtn" onclick="handleFolderSaveOption()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+          Choose Folder
+        </button>
+      </div>
+
+      <div class="backup-modal-divider"><span>or</span></div>
+
+      <!-- Option 2: Manual JSON backup (all browsers) -->
+      <div class="backup-option">
+        <div class="backup-option-icon backup-option-icon--json">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        </div>
+        <div class="backup-option-body">
+          <div class="backup-option-title">Download Backup File
+            <span class="backup-option-badge backup-option-badge--all">All Browsers</span>
+          </div>
+          <div class="backup-option-desc">Downloads a <code>.json</code> backup of all your exams, marks, and settings. Save it anywhere — Downloads, iCloud Drive, Google Drive. Restore it any time.</div>
+          <div class="backup-last-export" id="backupLastExportLabel">No backup yet</div>
+        </div>
+        <div class="backup-option-actions">
+          <button class="backup-option-btn backup-option-btn--export" onclick="exportBackupFile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+          <button class="backup-option-btn backup-option-btn--import" onclick="importBackupFile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Restore
+          </button>
+        </div>
+      </div>
+
+      <!-- Info tip -->
+      <div class="backup-info-tip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Your data never leaves your device. GradeFlow has no server. Browser storage can be cleared by your browser; a backup file is permanent until you delete it.</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="backup-modal-footer">
+      <button class="btn btn-ghost" onclick="closeBackupModal()">Close</button>
+    </div>
+  </div>
+</div>
+

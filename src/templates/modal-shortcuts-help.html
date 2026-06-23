@@ -1,0 +1,358 @@
+<!-- ══════════════════════════════════════════════════════════════
+     KEYBOARD SHORTCUT CHEAT SHEET MODAL
+     ══════════════════════════════════════════════════════════════ -->
+<div id="shortcutModalOverlay" class="sc-overlay" onclick="if(event.target===this)closeShortcutModal()" aria-modal="true" role="dialog" aria-labelledby="scTitle">
+  <div class="sc-modal">
+    <div class="sc-header">
+      <div class="sc-title-row">
+        <!-- Icon swaps between keyboard (PC) and phone (mobile) via JS -->
+        <span id="scHeaderIcon" style="color:var(--primary);flex-shrink:0;display:flex;">
+          <!-- default: keyboard -->
+          <svg id="scIconPc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg>
+          <svg id="scIconMobile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+        </span>
+        <span id="scTitle">Help &amp; Tips</span>
+      </div>
+      <!-- Device toggle tabs — lets any user manually switch view -->
+      <div class="sc-device-tabs" id="scDeviceTabs">
+        <button class="sc-tab" id="scTabPc" onclick="scShowTab('pc')" title="PC / Desktop view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          PC
+        </button>
+        <button class="sc-tab" id="scTabMobile" onclick="scShowTab('mobile')" title="Mobile / Tablet view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+          Mobile
+        </button>
+      </div>
+      <button class="sc-close" onclick="closeShortcutModal()" aria-label="Close">×</button>
+    </div>
+
+    <!-- ══ PC / KEYBOARD CONTENT ══ -->
+    <div class="sc-body" id="scBodyPc">
+      <!-- Guide banner -->
+      <div class="sc-guide-banner" onclick="closeShortcutModal(); setTimeout(function(){ window.gftStartTour && window.gftStartTour(); }, 200);">
+        <div class="sc-guide-banner-left">
+          <div class="sc-guide-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <div class="sc-guide-banner-title">New to GradeFlow?</div>
+            <div class="sc-guide-banner-sub">Take the interactive Guide — learn the full workflow in 60 seconds.</div>
+          </div>
+        </div>
+        <div class="sc-guide-banner-cta">Start Guide →</div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Marks Table Navigation</div>
+        <div class="sc-grid">
+          <div class="sc-row"><span class="sc-keys"><kbd>Tab</kbd></span><span class="sc-desc">Move right to next cell</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Shift</kbd>+<kbd>Tab</kbd></span><span class="sc-desc">Move left to previous cell</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Enter</kbd></span><span class="sc-desc">Move down to next student</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd></span><span class="sc-desc">Navigate cells directionally</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd style="color:#dc2626;border-color:#fca5a5;">A</kbd></span><span class="sc-desc">Mark cell absent — or clear absent if already AB</span></div>
+          <div class="sc-row"><span class="sc-keys">AB cell focused</span><span class="sc-desc">Arrow keys navigate away · Enter/A clears absent</span></div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Fill &amp; Bulk Actions</div>
+        <div class="sc-grid">
+          <div class="sc-row"><span class="sc-keys"><kbd>Right-click</kbd> header or cell</span><span class="sc-desc">Open fill &amp; bulk-mark menu</span></div>
+          <div class="sc-row"><span class="sc-keys">Fill column</span><span class="sc-desc">Set same mark for all students</span></div>
+          <div class="sc-row"><span class="sc-keys">Copy mark down</span><span class="sc-desc">Repeat a cell's value downward</span></div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Pass Mark Panel</div>
+        <div class="sc-grid">
+          <div class="sc-row"><span class="sc-keys"><kbd>↑</kbd><kbd>↓</kbd></span><span class="sc-desc">Navigate between subjects</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>←</kbd><kbd>→</kbd></span><span class="sc-desc">Decrease / increase value by 1</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Enter</kbd></span><span class="sc-desc">Move to next subject</span></div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Grading Scale Panel</div>
+        <div class="sc-grid">
+          <div class="sc-row"><span class="sc-keys"><kbd>↑</kbd><kbd>↓</kbd></span><span class="sc-desc">Move between grade rows</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>←</kbd><kbd>→</kbd></span><span class="sc-desc">Decrease / increase percent by 1</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>+</kbd> / <kbd>−</kbd></span><span class="sc-desc">Nudge percent value up / down</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>→</kbd></span><span class="sc-desc">Jump from label to percent field</span></div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Global</div>
+        <div class="sc-grid">
+          <div class="sc-row"><span class="sc-keys"><kbd>Ctrl</kbd>+<kbd>Z</kbd></span><span class="sc-desc">Undo last mark change</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Ctrl</kbd>+<kbd>E</kbd></span><span class="sc-desc">Open / close Exam Manager</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Shift</kbd>+<kbd>?</kbd></span><span class="sc-desc">Open this help reference</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Esc</kbd></span><span class="sc-desc">Close any open panel or dialog</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MOBILE / TOUCH CONTENT ══ -->
+    <div class="sc-body" id="scBodyMobile" style="display:none;">
+      <!-- Guide banner -->
+      <div class="sc-guide-banner" onclick="closeShortcutModal(); setTimeout(function(){ window.gftStartTour && window.gftStartTour(); }, 200);">
+        <div class="sc-guide-banner-left">
+          <div class="sc-guide-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <div class="sc-guide-banner-title">New to GradeFlow?</div>
+            <div class="sc-guide-banner-sub">Take the interactive Guide — learn the full workflow in 60 seconds.</div>
+          </div>
+        </div>
+        <div class="sc-guide-banner-cta">Start Guide →</div>
+      </div>
+      <div class="sc-mobile-banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z"/><path d="M12 8v4l3 3"/></svg>
+        Touch gestures &amp; tips for mobile and tablet
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Entering Marks</div>
+        <div class="sc-tip-cards">
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(26,86,219,0.1);color:#1a56db;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Tap a cell</div>
+              <div class="sc-tip-sub">Opens the number keypad to enter a mark</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(5,150,105,0.1);color:#059669;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Use Next / Done on keypad</div>
+              <div class="sc-tip-sub">Moves to the next cell automatically</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(245,158,11,0.1);color:#d97706;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Swipe the marks table</div>
+              <div class="sc-tip-sub">Scroll left / right to see all subjects</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Fill &amp; Bulk Actions</div>
+        <div class="sc-tip-cards">
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(124,58,237,0.1);color:#7c3aed;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Long-press a cell</div>
+              <div class="sc-tip-sub">Opens the fill &amp; bulk-mark menu for that column</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(26,86,219,0.1);color:#1a56db;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Long-press a column header</div>
+              <div class="sc-tip-sub">Fill all students with the same mark at once</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(5,150,105,0.1);color:#059669;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Copy mark down</div>
+              <div class="sc-tip-sub">Fills remaining rows with the same value downward</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Managing Subjects</div>
+        <div class="sc-tip-cards">
+
+          <div class="sc-tip-card sc-tip-card--highlight">
+            <div class="sc-tip-icon" style="background:rgba(99,102,241,0.12);color:#6366f1;">
+              <!-- 6-dot drag handle icon -->
+              <svg viewBox="0 0 14 20" fill="currentColor" width="16" height="16">
+                <circle cx="4" cy="3"  r="2"/><circle cx="10" cy="3"  r="2"/>
+                <circle cx="4" cy="10" r="2"/><circle cx="10" cy="10" r="2"/>
+                <circle cx="4" cy="17" r="2"/><circle cx="10" cy="17" r="2"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Move a subject to another group</div>
+              <div class="sc-tip-sub">Hold and drag the <strong>⠿ grip icon</strong> on any subject tag, then drop it onto a different group row. The subject moves instantly and a confirmation toast appears.</div>
+            </div>
+          </div>
+
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(99,102,241,0.09);color:#818cf8;">
+              <!-- left-right arrows icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Reorder subjects within a group</div>
+              <div class="sc-tip-sub">Drag a subject left or right using the same grip icon to change its position inside its group. A blue caret line shows exactly where it will land — left half = before, right half = after.</div>
+            </div>
+          </div>
+
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(26,86,219,0.1);color:#1a56db;">
+              <!-- pencil icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Edit a subject name or max marks</div>
+              <div class="sc-tip-sub">Tap the <strong>pencil ✏️</strong> on any subject tag to open the inline editor. You can tap freely between the name field and the marks field — the editor stays open until you tap ✓ to save or ✕ to cancel.</div>
+            </div>
+          </div>
+
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(245,158,11,0.1);color:#d97706;">
+              <!-- finger-tap icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <path d="M18 11V6a2 2 0 00-4 0v5"/><path d="M14 10V4a2 2 0 00-4 0v6"/><path d="M10 10.5V6a2 2 0 00-4 0v8"/><path d="M6 14a4 4 0 004 4h4a6 6 0 006-6v-1a2 2 0 00-4 0"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Tip: hold for a moment before dragging</div>
+              <div class="sc-tip-sub">On touch screens, press the grip dot slightly longer (~200 ms) before you start sliding — this prevents accidental drags while scrolling the page.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Navigation</div>
+        <div class="sc-tip-cards">
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(26,86,219,0.1);color:#1a56db;">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Bottom navigation bar</div>
+              <div class="sc-tip-sub">Switch between Setup, Students, Subjects, Marks, Results, Analytics</div>
+            </div>
+          </div>
+          <div class="sc-tip-card sc-tip-card--highlight">
+            <div class="sc-tip-icon" style="background:rgba(124,58,237,0.12);color:#7c3aed;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18">
+                <path d="M5 12h14"/>
+                <polyline points="10 7 5 12 10 17"/>
+                <polyline points="14 7 19 12 14 17"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Swipe left / right to switch steps</div>
+              <div class="sc-tip-sub">Swipe anywhere on the screen to move between Setup → Students → Subjects → Marks → Results → Analytics. Works just like swiping between pages in an app.</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(245,158,11,0.1);color:#d97706;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">More button (bottom bar)</div>
+              <div class="sc-tip-sub">Access Save, Undo, Theme, Branding &amp; Reset</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(5,150,105,0.1);color:#059669;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Save status pill (top bar)</div>
+              <div class="sc-tip-sub">Tap the coloured dot to save your session instantly</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Results &amp; Export</div>
+        <div class="sc-tip-cards">
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(220,38,38,0.1);color:#dc2626;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Export report cards</div>
+              <div class="sc-tip-sub">Go to Results tab → tap Export to download PDF or Excel</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(124,58,237,0.1);color:#7c3aed;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Share results</div>
+              <div class="sc-tip-sub">Use your device's share sheet to send reports via WhatsApp, email, etc.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Quick Tips</div>
+        <div class="sc-tip-cards">
+          <div class="sc-tip-card sc-tip-card--highlight">
+            <div class="sc-tip-icon" style="background:rgba(245,158,11,0.15);color:#d97706;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Add to home screen</div>
+              <div class="sc-tip-sub">Install GradeFlow as an app — tap Share → "Add to Home Screen" in your browser</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(26,86,219,0.1);color:#1a56db;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Auto-save is always on</div>
+              <div class="sc-tip-sub">Your data saves automatically. Tap the save pill anytime for a manual save.</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(5,150,105,0.1);color:#059669;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Undo mistakes</div>
+              <div class="sc-tip-sub">Tap More → Undo to reverse the last mark change</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc-footer" id="scFooterPc">
+      <span class="sc-tip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Right-click any column header or mark cell for bulk fill &amp; copy options
+      </span>
+    </div>
+    <div class="sc-footer" id="scFooterMobile" style="display:none;">
+      <span class="sc-tip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Long-press any mark cell or column header for bulk fill &amp; copy options
+      </span>
+    </div>
+  </div>
+</div>
+

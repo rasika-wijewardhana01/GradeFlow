@@ -1,0 +1,374 @@
+<!-- ══ Reset All Confirmation Modal ══ -->
+<!-- ══════════════════════════════════════════════════
+     FOLDER CHANGE CONFIRM DIALOG
+     Shown when user clicks "Save to Device" while a
+     folder is already active — replaces browser confirm().
+══════════════════════════════════════════════════ -->
+<div class="fc-overlay" id="fcOverlay" onclick="if(event.target===this)closeFolderConfirm()">
+  <div class="fc-dialog-wrap">
+  <div class="fc-dialog" role="dialog" aria-modal="true" aria-labelledby="fcTitle">
+
+    <!-- Icon strip -->
+    <div class="fc-strip">
+      <div class="fc-icon">
+        <!-- Folder-switch icon: two folders with a swap arrow between them -->
+        <svg viewBox="0 0 56 56" width="64" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="fcBg" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#7c3aed"/>
+              <stop offset="100%" stop-color="#a855f7"/>
+            </linearGradient>
+            <linearGradient id="fcFolderA" x1="4" y1="14" x2="26" y2="36" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#e9d5ff" stop-opacity="0.85"/>
+            </linearGradient>
+            <linearGradient id="fcFolderB" x1="30" y1="20" x2="52" y2="42" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.75"/>
+              <stop offset="100%" stop-color="#ddd6fe" stop-opacity="0.60"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Rounded background pill -->
+          <rect width="56" height="56" rx="16" fill="url(#fcBg)"/>
+
+          <!-- Folder A (left, front) — tab + body -->
+          <path d="M6 22a2 2 0 012-2h5.5l1.8 2.2a1 1 0 00.78.38H21a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2V22z"
+            fill="url(#fcFolderA)"/>
+          <!-- Folder A tab -->
+          <path d="M6 22a2 2 0 012-2h5.5l1.8 2.2" stroke="white" stroke-width="0" fill="white" fill-opacity="0.4"/>
+
+          <!-- Folder B (right, slightly back) — tab + body -->
+          <path d="M33 27a2 2 0 012-2h5.5l1.8 2.2a1 1 0 00.78.38H48a2 2 0 012 2v8a2 2 0 01-2 2H35a2 2 0 01-2-2V27z"
+            fill="url(#fcFolderB)"/>
+
+          <!-- Swap arrow: right-pointing upper arm -->
+          <path d="M24 24.5 C27 22, 31 22, 33 24.5"
+            stroke="white" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.95"/>
+          <polyline points="31,22 33,24.5 30.5,26.5"
+            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95"/>
+
+          <!-- Swap arrow: left-pointing lower arm -->
+          <path d="M32 31.5 C29 34, 25 34, 23 31.5"
+            stroke="white" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.95"/>
+          <polyline points="25,34 23,31.5 25.5,29.5"
+            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95"/>
+        </svg>
+      </div>
+      <div class="fc-strip-title" id="fcTitle">Device Folder Active</div>
+    </div>
+
+    <!-- Body -->
+    <div class="fc-body">
+      <div class="fc-body-desc">
+        GradeFlow is currently saving to <strong id="fcFolderName" style="color:var(--text);">your device folder</strong>.<br>
+        What would you like to do?
+      </div>
+
+      <div class="fc-options">
+        <!-- Change folder -->
+        <button class="fc-option" id="fcChangeFolderBtn" onclick="fcChooseChange()">
+          <div class="fc-option-icon fc-option-icon--blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+              <line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>
+            </svg>
+          </div>
+          <div class="fc-option-text">
+            <div class="fc-option-label">Change Folder</div>
+            <div class="fc-option-sub">Pick a different folder on your device to save to</div>
+          </div>
+          <svg class="fc-option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+
+        <!-- Revert to browser -->
+        <button class="fc-option fc-option--danger" id="fcRevertBtn" onclick="fcChooseRevert()">
+          <div class="fc-option-icon fc-option-icon--red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <polyline points="1 4 1 10 7 10"/>
+              <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+            </svg>
+          </div>
+          <div class="fc-option-text">
+            <div class="fc-option-label">Revert to Browser Storage</div>
+            <div class="fc-option-sub">Stop saving to device — use browser memory only</div>
+          </div>
+          <svg class="fc-option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="fc-footer">
+      <button class="fc-cancel-btn" onclick="closeFolderConfirm()">Cancel — keep current folder</button>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<div class="reset-confirm-overlay" id="resetConfirmOverlay" onclick="if(event.target===this)closeResetConfirm()">
+  <div class="reset-confirm-dialog-wrap">
+  <div class="reset-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="rcTitle" aria-describedby="rcDesc">
+
+    <!-- Warning strip -->
+    <div class="reset-confirm-strip">
+      <div class="reset-confirm-icon">
+        <!-- Shield with exclamation — proper warning icon -->
+        <svg viewBox="0 0 24 24" fill="none" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+          <!-- Shield fill -->
+          <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6L12 2z" fill="#dc2626"/>
+          <!-- Shield inner highlight -->
+          <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6L12 2z" fill="url(#shieldGrad)"/>
+          <!-- Exclamation mark -->
+          <rect x="11" y="8" width="2" height="5" rx="1" fill="white"/>
+          <rect x="11" y="15" width="2" height="2" rx="1" fill="white"/>
+          <defs>
+            <linearGradient id="shieldGrad" x1="12" y1="2" x2="12" y2="23" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+              <stop offset="100%" stop-color="rgba(0,0,0,0.12)"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="reset-confirm-strip-title" id="rcTitle">Reset Everything?</div>
+    </div>
+
+    <!-- Body -->
+    <div class="reset-confirm-body" id="rcDesc">
+      <p>This will <strong>permanently delete</strong> all data in the current exam and cannot be undone.</p>
+      <ul class="reset-confirm-list">
+        <li>All students and index numbers</li>
+        <li>All subjects and marks</li>
+        <li>All results and analytics</li>
+        <li>Class setup information</li>
+      </ul>
+    </div>
+
+    <!-- Footer -->
+    <div class="reset-confirm-footer">
+      <button class="btn-rc-cancel" onclick="closeResetConfirm()" id="rcCancelBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Cancel
+      </button>
+      <button class="btn-rc-confirm" onclick="confirmResetAll()" id="rcConfirmBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        Yes, Reset All
+      </button>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<!-- ══ Reload / Leave Confirm Dialog ══ -->
+<div class="reload-confirm-overlay" id="reloadConfirmOverlay">
+  <div class="reload-confirm-dialog-wrap">
+  <div class="reload-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="rlTitle" aria-describedby="rlDesc">
+
+    <!-- Warning strip -->
+    <div class="reload-confirm-strip">
+      <div class="reload-confirm-icon">
+        <!-- Warning triangle icon — amber -->
+        <svg viewBox="0 0 24 24" fill="none" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="#d97706" opacity="0.2" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="11" y="9" width="2" height="6" rx="1" fill="#d97706"/>
+          <rect x="11" y="17" width="2" height="2" rx="1" fill="#d97706"/>
+        </svg>
+      </div>
+      <div class="reload-confirm-strip-title" id="rlTitle">Reload Page?</div>
+    </div>
+
+    <!-- Body -->
+    <div class="reload-confirm-body" id="rlDesc">
+      <p>You have <strong>unsaved changes</strong> that will be lost if you reload now.</p>
+      <ul class="reload-confirm-list">
+        <li>Unsaved marks and student data</li>
+        <li>Changes made since your last save</li>
+        <li>Current session progress</li>
+      </ul>
+    </div>
+
+    <!-- Footer -->
+    <div class="reload-confirm-footer">
+      <button class="btn-rl-cancel" id="rlCancelBtn" onclick="closeReloadConfirm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Cancel
+      </button>
+      <button class="btn-rl-save" id="rlSaveBtn" onclick="manualSave();closeReloadConfirm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save First
+      </button>
+      <button class="btn-rl-confirm" id="rlConfirmBtn" onclick="confirmReload()">
+        Reload Anyway
+      </button>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<!-- ══ Undo History Modal (mobile) ══ -->
+<div id="undoHistoryModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(9,14,30,0.6);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;padding:0;" onclick="if(event.target===this)closeUndoHistory()">
+  <div role="dialog" aria-modal="true" aria-labelledby="undoHistModalHeading" style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:70vh;flex-direction:column;animation:slideUpIn 0.22s ease;">
+    <div class="undo-hist-modal-header" style="padding:12px 18px 10px;background:var(--bg);border-bottom:1px solid var(--border);border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between;">
+      <div id="undoHistModalHeading" style="font-size:14px;font-weight:700;color:var(--text);">Undo History <span id="undoHistModalCount" style="font-size:12px;color:var(--text-muted);font-weight:500;"></span></div>
+      <button onclick="closeUndoHistory()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);line-height:1;padding:0 2px;">✕</button>
+    </div>
+    <div id="undoHistModalList" style="overflow-y:auto;flex:1;padding:6px 0;"></div>
+    <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;">
+      <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center;" onclick="closeUndoHistory()">Close</button>
+      <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center;" onclick="performUndo();closeUndoHistory()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+        Undo last
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ CLASS TEMPLATE IMPORT / EXPORT MODAL ══ -->
+<div class="ctpl-overlay" id="ctplOverlay" onclick="if(event.target===this)closeTemplateModal()">
+  <div class="ctpl-modal" role="dialog" aria-modal="true" aria-labelledby="ctplTitle">
+
+    <!-- Header -->
+    <div class="ctpl-header">
+      <div class="ctpl-header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6M9 15l3 3 3-3"/></svg>
+      </div>
+      <div class="ctpl-header-text">
+        <h3 id="ctplTitle">Class Template — Import &amp; Export</h3>
+        <p>Save your class setup as a reusable JSON, or load one to skip re-entry of students and subjects.</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeTemplateModal()" style="flex-shrink:0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="ctpl-body">
+
+      <!-- EXPORT PANEL -->
+      <div class="ctpl-panel">
+        <div class="ctpl-panel-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <strong>Export Class Template</strong>
+          <span id="ctplExportSummary">—</span>
+        </div>
+        <div class="ctpl-panel-body">
+          <div class="ctpl-summary" id="ctplExportChips"></div>
+          <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 12px;line-height:1.6;">Exports class info, students, and subjects — <em>no marks</em> — so you can load the same roster for a future exam.</p>
+          <button class="btn btn-primary btn-sm" onclick="exportClassTemplate()" style="width:100%;justify-content:center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download class_template.json
+          </button>
+        </div>
+      </div>
+
+      <div class="ctpl-or-divider">or import a saved template</div>
+
+      <!-- IMPORT PANEL -->
+      <div class="ctpl-panel">
+        <div class="ctpl-panel-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="15"/></svg>
+          <strong>Import Class Template</strong>
+        </div>
+        <div class="ctpl-panel-body" style="display:flex;flex-direction:column;gap:10px;">
+
+          <!-- Drop zone -->
+          <div class="ctpl-dropzone" id="ctplDropzone"
+            ondragover="event.preventDefault();this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="event.preventDefault();this.classList.remove('drag-over');ctplHandleDrop(event)">
+            <input type="file" id="ctplFileInput" accept=".json" onchange="ctplHandleFile(event)" />
+            <div class="ctpl-dropzone-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="15"/></svg>
+            </div>
+            <p><strong>Click to choose</strong> or drag &amp; drop a JSON file here</p>
+            <p style="font-size:11.5px;margin-top:4px;">Only .json files exported from this app are supported</p>
+          </div>
+
+          <!-- File loaded banner -->
+          <div class="ctpl-file-loaded" id="ctplFileBanner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="ctplFileNameLabel">—</span>
+            <button onclick="ctplClearFile()" title="Remove file">✕</button>
+          </div>
+
+          <!-- Validation results -->
+          <div class="ctpl-preview-info" id="ctplValidation"></div>
+
+          <!-- Import options -->
+          <div id="ctplImportOptions" style="display:none;">
+            <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:7px;">What would you like to do with marks?</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div class="ctpl-option-row selected" id="ctplOptFresh" onclick="ctplSelectOption('fresh')">
+                <div class="ctpl-option-dot"></div>
+                <div class="ctpl-option-label">
+                  <strong>Start fresh — import setup only</strong>
+                  <span>Students &amp; subjects loaded, all mark fields empty</span>
+                </div>
+              </div>
+              <div class="ctpl-option-row" id="ctplOptMarks" onclick="ctplSelectOption('marks')">
+                <div class="ctpl-option-dot"></div>
+                <div class="ctpl-option-label">
+                  <strong>Import marks too</strong>
+                  <span>Restore marks from file if they were included</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="ctpl-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeTemplateModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="ctplApplyBtn" onclick="ctplApplyImport()" disabled style="margin-left:auto;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>
+        Apply Template
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PDF Generation Progress Overlay ══ -->
+<div class="pdf-gen-overlay" id="pdfGenOverlay" role="dialog" aria-modal="true" aria-label="Generating PDF">
+  <div class="pdf-gen-card-wrap">
+  <div class="pdf-gen-card">
+
+    <!-- Animated spinner icon -->
+    <div class="pdf-gen-spinner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="28" height="28">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <path d="M12 18v-6M9 15l3 3 3-3"/>
+      </svg>
+    </div>
+
+    <div class="pdf-gen-title" id="pdfGenTitle">Generating PDF…</div>
+
+    <div class="pdf-gen-step" id="pdfGenStep">
+      Preparing report card for<br>
+      <span class="pdf-gen-name" id="pdfGenName">—</span>
+    </div>
+
+    <div class="pdf-gen-track">
+      <div class="pdf-gen-bar" id="pdfGenBar"></div>
+    </div>
+
+    <div class="pdf-gen-counts" id="pdfGenCounts">0 / 0</div>
+
+    <div class="pdf-gen-cancel-wrap">
+      <button class="pdf-gen-cancel-btn" id="pdfGenCancelBtn" onclick="_pdfGenCancel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Cancel
+      </button>
+    </div>
+
+  </div>
+  </div>
+</div>
+

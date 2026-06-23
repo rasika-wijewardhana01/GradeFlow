@@ -1,0 +1,386 @@
+/* ════════════════════════════════════════════════════════════════════
+   GradeFlow — Motion & Depth System v2  ("Refined Glass")
+   ────────────────────────────────────────────────────────────────────
+   Loaded LAST. This file layers global motion choreography and glass
+   depth refinements on top of style.css without restructuring layout:
+
+     1. Reduced-motion guard
+     2. Ambient mesh backdrop (depth behind glass surfaces)
+     3. Step / wizard transition system — "Glass Page-Turn" (signature)
+     4. Refined glass-panel entrance keyframes (global override)
+     5. Core chrome refinements — sidebar, topbar, cards, buttons, focus
+     6. Generic modal choreography (.gf-modal-*) + micro-interactions
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Reduced motion ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .section.active::after { display: none !important; }
+}
+
+/* ── 2. Ambient mesh backdrop ────────────────────────────────────── */
+body {
+  background-color: var(--bg);
+  background-image: var(--mesh-gradient);
+}
+
+/* ── 3. Step / wizard transitions — "Glass Page-Turn" ───────────────
+   The active step slides in from the direction of travel, while a
+   diagonal sheen sweeps across a thin band at the top of the step —
+   like turning to the next page in a gradebook.
+
+   PERF NOTE: transform + opacity only on the section itself (no
+   filter: blur — animating a blur filter over a tall section full of
+   tables forces the browser to re-rasterize the whole thing every
+   frame, which is the #1 cause of step-switch jank). The sheen is
+   capped to a small fixed-height band rather than the full section so
+   its mix-blend-mode compositing cost stays constant regardless of
+   how long the table below it is.
+──────────────────────────────────────────────────────────────────── */
+@keyframes gfStepEnterFwd {
+  0%   { opacity: 0; transform: translateX(24px) scale(0.99); }
+  100% { opacity: 1; transform: translateX(0)    scale(1); }
+}
+@keyframes gfStepEnterBack {
+  0%   { opacity: 0; transform: translateX(-24px) scale(0.99); }
+  100% { opacity: 1; transform: translateX(0)      scale(1); }
+}
+@keyframes gfSheenSweep {
+  0%   { transform: translateX(-120%) skewX(-14deg); opacity: 0; }
+  35%  { opacity: 0.9; }
+  100% { transform: translateX(220%) skewX(-14deg); opacity: 0; }
+}
+
+.section {
+  display: none;
+  min-width: 0;
+  position: relative;
+}
+.section.active {
+  display: block;
+  animation: gfStepEnterFwd var(--dur-base) var(--ease-out-expo) both;
+  will-change: transform, opacity;
+}
+.section.active.gf-dir-back { animation-name: gfStepEnterBack; }
+
+/* Sheen overlay — capped to a 140px band at the top, purely decorative */
+.section.active::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 140px;
+  background: var(--glass-sheen);
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  z-index: 6;
+  will-change: transform, opacity;
+  animation: gfSheenSweep var(--dur-slow) var(--ease-smooth) both;
+}
+
+/* ── 4. Refined glass-panel entrance keyframes (global override) ────
+   These keyframe names are already referenced by several modals
+   (restore/backup, exam manager, compare, completion ring). Redefining
+   them here — loaded last — adds a touch of spring overshoot and a
+   "materialising glass" blur-in to every modal that uses them, with
+   zero per-modal edits.
+──────────────────────────────────────────────────────────────────── */
+@keyframes rmSlideUp {
+  0%   { opacity: 0; transform: translateY(34px) scale(0.94); filter: blur(2px); }
+  60%  { opacity: 1; transform: translateY(-3px) scale(1.01); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes emSlideUp {
+  0%   { opacity: 0; transform: translateY(32px) scale(0.95); filter: blur(2px); }
+  60%  { opacity: 1; transform: translateY(-3px) scale(1.01); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes slideUpIn {
+  0%   { opacity: 0; transform: translateY(26px) scale(0.95); filter: blur(2px); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.008); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes rcSlideUp {
+  0%   { opacity: 0; transform: translateY(12px) scale(0.96); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.006); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* ── 5. Core chrome refinements ─────────────────────────────────── */
+
+/* Cards — softer cobalt-tinted elevation + gentle lift on hover */
+.card {
+  box-shadow: var(--shadow-glass-sm);
+  transition: transform var(--dur-base) var(--ease-out-expo),
+              box-shadow var(--dur-base) var(--ease-out-expo),
+              border-color var(--dur-base) var(--ease-out-expo);
+}
+.card:hover {
+  box-shadow: var(--shadow-glass-md);
+  transform: translateY(-2px);
+  border-color: rgba(36, 81, 214, 0.18);
+}
+[data-theme="dark"] .card:hover { border-color: rgba(96, 165, 250, 0.28); }
+
+/* Topbar — extra depth under the glass */
+.topbar { box-shadow: var(--shadow-glass-sm); }
+
+/* Sidebar — ambient mesh glow behind the icon rail */
+.sidebar { position: fixed; }
+.sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--mesh-gradient);
+  opacity: 0.7;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 0;
+}
+.sidebar-inner { position: relative; z-index: 1; }
+
+/* Active nav item — cobalt → violet gradient with soft glow */
+.nav-item.active,
+.nav-item.active:hover {
+  background: linear-gradient(135deg, var(--gf-cobalt) 0%, var(--gf-violet) 130%);
+  box-shadow: var(--glow-primary);
+}
+.nav-item {
+  transition: background var(--dur-fast) var(--ease-out-expo),
+              color var(--dur-fast) var(--ease-out-expo),
+              box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+
+/* Primary buttons — gradient + glow + spring press */
+.btn {
+  transition: transform var(--dur-fast) var(--ease-out-expo),
+              box-shadow var(--dur-fast) var(--ease-out-expo),
+              background var(--dur-fast) var(--ease-out-expo),
+              border-color var(--dur-fast) var(--ease-out-expo),
+              color var(--dur-fast) var(--ease-out-expo);
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--gf-cobalt) 0%, var(--gf-cobalt-deep) 140%);
+  border-color: var(--gf-cobalt);
+  box-shadow: var(--glow-primary);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #3A63E6 0%, var(--gf-cobalt-deep) 140%);
+  box-shadow: 0 0 0 1px rgba(36,81,214,0.18), 0 12px 32px rgba(36,81,214,0.32);
+  transform: translateY(-1px);
+}
+.btn:active {
+  transform: scale(0.965);
+  transition-duration: var(--dur-instant);
+}
+
+/* Refined focus ring — violet, on top of any existing outline rules */
+:focus-visible {
+  outline: 2px solid var(--gf-violet);
+  outline-offset: 2px;
+}
+
+/* ── 6. Generic modal choreography + micro-interactions ─────────── */
+@keyframes gfOverlayIn  { from { opacity: 0; } to { opacity: 1; } }
+
+/* fadeUp — referenced by .share-modal, .sc-modal, .compare-modal and
+   .subjgrade-modal but never defined anywhere in style.css, so those
+   four modal panels previously popped in with no entrance animation
+   at all. Defining it here gives them the refined spring/glass settle. */
+@keyframes fadeUp {
+  0%   { opacity: 0; transform: translateY(24px) scale(0.96); filter: blur(2px); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.008); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* Static diagonal sheen — "light catching glass" on modal panels that
+   already declare position:relative; overflow:hidden, so this is purely
+   additive and never clips new content. */
+.share-modal::after,
+.sc-modal::after,
+.compare-modal::after,
+.subjgrade-modal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-sheen);
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 1;
+}
+.subjgrade-modal-overlay.open,
+.share-modal-overlay.open,
+.sc-modal-overlay.open,
+.compare-modal-overlay.open {
+  animation: gfOverlayIn var(--dur-fast) var(--ease-smooth) both;
+}
+@keyframes gfPanelIn {
+  0%   { opacity: 0; transform: translateY(28px) scale(0.94); filter: blur(2px); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0); }
+}
+
+/* Flagship retrofits: Fill-value prompt + Keyboard Shortcuts modal */
+.fv-overlay.open,
+.sc-overlay.open {
+  animation: gfOverlayIn var(--dur-fast) var(--ease-smooth) both;
+}
+.fv-overlay.open .fv-dialog,
+.sc-overlay.open .sc-modal {
+  animation: gfPanelIn var(--dur-slow) var(--ease-spring) both;
+}
+
+/* Reusable lift / press utilities for future components */
+.gf-lift {
+  transition: transform var(--dur-base) var(--ease-out-expo),
+              box-shadow var(--dur-base) var(--ease-out-expo);
+}
+.gf-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-glass-md);
+}
+.gf-press:active { transform: scale(0.96); }
+
+/* ── 7. Exam Manager — depth & motion polish ─────────────────────
+   Active development area: lift on hover, gradient active-ring,
+   and lively drag-handle feedback for the reorderable exam list.
+──────────────────────────────────────────────────────────────── */
+.exam-item {
+  transition: transform var(--dur-base) var(--ease-out-expo),
+              box-shadow var(--dur-base) var(--ease-out-expo),
+              border-color var(--dur-base) var(--ease-out-expo),
+              background var(--dur-base) var(--ease-out-expo);
+}
+.exam-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glass-md);
+}
+.exam-item.exam-active {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    linear-gradient(135deg, var(--gf-cobalt) 0%, var(--gf-violet) 130%) border-box;
+  border: 1.5px solid transparent;
+  box-shadow: var(--glow-primary);
+}
+.exam-item.exam-active .exam-item-icon {
+  background: linear-gradient(135deg, var(--gf-cobalt) 0%, var(--gf-violet) 130%);
+  color: #fff;
+}
+.exam-active-badge {
+  background: linear-gradient(135deg, var(--gf-cobalt) 0%, var(--gf-violet) 130%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--glow-primary);
+}
+
+/* Drag handle — lively grab feedback */
+.em-drag-handle {
+  transition: opacity var(--dur-fast) var(--ease-out-expo),
+              transform var(--dur-fast) var(--ease-spring),
+              color var(--dur-fast) var(--ease-out-expo);
+}
+.em-drag-handle:active { transform: scale(1.18); color: var(--gf-cobalt) !important; }
+body.em-dragging-active .exam-item { transition: transform var(--dur-fast) var(--ease-spring); }
+
+/* ── 8. Data typography — numeric/mark fields use tabular figures ──
+   Ties the typeface choice to the subject: a grading tool's numbers
+   should align like a ledger. Applied to mark inputs and numeric
+   table cells without disturbing layout (same size, new face).
+──────────────────────────────────────────────────────────────── */
+.mark-input,
+.mnt-display,
+.mnt-display-val,
+.result-subject-mark,
+.rank-cell,
+.metric-value {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── 9. Metric cards & toasts ────────────────────────────────────
+   Dashboard summary tiles and notifications pick up the same
+   glass elevation + lift + spring-entrance language.
+──────────────────────────────────────────────────────────────── */
+.metric-card {
+  box-shadow: var(--shadow-glass-sm);
+  transition: transform var(--dur-base) var(--ease-out-expo),
+              box-shadow var(--dur-base) var(--ease-out-expo);
+}
+.metric-card:hover {
+  box-shadow: var(--shadow-glass-md);
+  transform: translateY(-2px);
+}
+.metric-card.blue::before {
+  background: linear-gradient(90deg, var(--gf-cobalt) 0%, var(--gf-violet) 100%);
+}
+
+/* Toasts — refined glass body + spring slide-in (overrides slideIn) */
+@keyframes slideIn {
+  0%   { opacity: 0; transform: translateX(28px) scale(0.97); filter: blur(2px); }
+  60%  { opacity: 1; transform: translateX(-3px) scale(1.005); filter: blur(0); }
+  100% { opacity: 1; transform: translateX(0)    scale(1); }
+}
+.toast {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-glass-md);
+}
+
+/* ── 10. Wizard step pills (Setup zone + active-step bar) ─────────
+   Active step glows with the cobalt → violet gradient, echoing the
+   sidebar nav and Exam Manager active state for a cohesive system.
+──────────────────────────────────────────────────────────────── */
+.step-active,
+.step-setup {
+  transition: transform var(--dur-base) var(--ease-out-expo),
+              box-shadow var(--dur-base) var(--ease-out-expo),
+              background var(--dur-base) var(--ease-out-expo),
+              border-color var(--dur-base) var(--ease-out-expo);
+}
+.step-active:not(.locked):hover,
+.step-setup:not(.active):hover { transform: translateY(-1px); }
+
+.step-active.active {
+  box-shadow: var(--glow-primary), var(--shadow-glass-sm);
+}
+.step-active.active::before {
+  background: linear-gradient(180deg, var(--gf-cobalt), var(--gf-violet));
+}
+.step-setup.active .step-num,
+.step-active.active .step-num {
+  background: linear-gradient(135deg, var(--gf-cobalt) 0%, var(--gf-violet) 130%);
+  box-shadow: var(--glow-primary);
+}
+
+/* ── 11. Theme toggle — radial reveal transition ──────────────────
+   Flipping light↔dark expands the *new* theme outward from the exact
+   point the toggle was pressed (sidebar switch, topbar pill, overflow
+   menu item, or mobile sheet row — ui-theme.js reads coordinates from
+   whichever one fired). The old screenshot just sits underneath,
+   uncovered as the new one grows — no extra DOM, no per-element work.
+
+   Support note: relies on the View Transitions API (Chromium, Safari).
+   Browsers without it — e.g. current Firefox — get the instant swap
+   that already existed; ui-theme.js checks `document.startViewTransition`
+   before doing any of this, so there's no broken/half-applied state.
+   `prefers-reduced-motion` is also checked in JS and skips straight to
+   the instant swap, on top of the global rule at the top of this file.
+──────────────────────────────────────────────────────────────── */
+::view-transition-old(root) {
+  animation: none;
+}
+::view-transition-new(root) {
+  animation: gfThemeReveal var(--dur-page) var(--ease-smooth) both;
+  mix-blend-mode: normal;
+}
+@keyframes gfThemeReveal {
+  from { clip-path: circle(0px at var(--theme-flip-x, 50%) var(--theme-flip-y, 50%)); }
+  to   { clip-path: circle(var(--theme-flip-radius, 150%) at var(--theme-flip-x, 50%) var(--theme-flip-y, 50%)); }
+}

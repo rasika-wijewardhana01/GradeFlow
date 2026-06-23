@@ -1,0 +1,3106 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<meta name="color-scheme" content="light dark" />
+<title>GradeFlow</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon_58.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/icon_29.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon_180.png" />
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon_152.png" />
+<link rel="apple-touch-icon" sizes="167x167" href="/icons/icon_167.png" />
+<link rel="apple-touch-icon" sizes="120x120" href="/icons/icon_120.png" />
+<link rel="manifest" href="/manifest.json" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="GradeFlow" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="description" content="GradeFlow — Smart grade &amp; marks management. Enter marks, auto-calculate grades, export report cards, and analyse class performance." />
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- Third-party globals — must be available before any module runs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<!-- Prevent theme flash: apply saved preference before first paint -->
+<script>
+(function(){
+  var saved = localStorage.getItem('rsm_dark_mode');
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var dark = saved !== null ? saved === 'dark' : prefersDark;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+})();
+</script>
+
+<!--
+  All CSS is bundled via src/app.js → src/main.css.
+  All inline scripts are in src/splash-screen.js, src/swipe-gestures.js,
+  src/tour.js, src/subject-autocomplete.js.
+  Previously: ~8 <style> blocks + 4 inline <script> blocks scattered across 5 888 lines.
+  Now: this file is pure semantic HTML, 3 900 lines, zero inline styles.
+-->
+</head>
+
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SPLASH SCREEN
+     HTML  : src/templates/splash-screen.html
+     CSS   : src/splash.css
+     Script: src/splash-screen.js (IIFE, runs on DOMContentLoaded)
+════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════════
+     GRADEFLOW — THE PREMIUM DASHBOARD  v5.0
+     Educational Background · Aurora Waves · Typing Cursor · Progress Memory
+     Background layers:
+       1. Deep space gradient base
+       2. Ruled notebook lines (CSS)
+       3. SVG educational symbols (static, scattered)
+       4. Canvas: aurora waves + floating chalk dust + drifting symbols
+       5. Soft vignette + grain
+       6. Glass card (foreground)
+═══════════════════════════════════════════════════════════════ -->
+<div id="gf-splash">
+
+  <!-- BG Layer 1: Deep gradient base -->
+  <div class="gfe-base"></div>
+
+  <!-- BG Layer 2: Ruled notebook lines -->
+  <div class="gfe-ruled"></div>
+
+  <!-- BG Layer 3: Canvas — aurora + dust + symbols -->
+  <canvas id="gfeCanvas"></canvas>
+
+  <!-- BG Layer 4: SVG floating educational icons (CSS animated) -->
+  <div class="gfe-symbols" id="gfeSymbols"></div>
+
+  <!-- BG Layer 5: Soft scan-line overlay -->
+  <div class="gfe-scanlines"></div>
+
+  <!-- BG Layer 6: Grain -->
+  <div class="gfe-grain"></div>
+
+  <!-- BG Layer 7: Vignette — edges dark, centre clear -->
+  <div class="gfe-vignette"></div>
+
+  <!-- ── Glass card (same as v4, untouched) ── -->
+  <div class="gfp-card" id="gfpCard">
+
+    <div class="gfp-icon-row">
+      <div class="gfp-icon-wrap">
+        <div class="gfp-icon-ring gfp-ring-a"></div>
+        <div class="gfp-icon-ring gfp-ring-b"></div>
+        <div class="gfp-icon-halo"></div>
+        <img id="gfpIcon" class="gfp-icon-img" src="icons/icon_1024.png" alt="GradeFlow"/>
+      </div>
+    </div>
+
+    <div class="gfp-greeting" id="gfpGreeting"></div>
+
+    <div class="gfp-brand">
+      <span class="gfp-brand-text">GradeFlow</span>
+      <span class="gfp-brand-badge">PRO</span>
+    </div>
+
+    <div class="gfp-tagline-wrap">
+      <span class="gfp-tagline" id="gfpTagline"></span><span class="gfp-cursor" id="gfpCursor">|</span>
+    </div>
+
+    <div class="gfp-divider"></div>
+
+    <div class="gfp-memory" id="gfpMemory"></div>
+
+    <div class="gfp-loading">
+      <div class="gfp-bar-track">
+        <div class="gfp-bar-fill" id="gfpBarFill"></div>
+      </div>
+      <span class="gfp-status" id="gfpStatus">Loading…</span>
+    </div>
+
+  </div>
+
+  <!-- Corner bracket decorations -->
+  <div class="gfe-corner gfe-tl"></div>
+  <div class="gfe-corner gfe-tr"></div>
+  <div class="gfe-corner gfe-bl"></div>
+  <div class="gfe-corner gfe-br"></div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     NOTIFICATIONS & GLOBAL OVERLAYS
+════════════════════════════════════════════════════════════ -->
+
+<!-- Toast container -->
+<!-- Toast container — aria-live="polite" ensures screen readers announce notifications
+     without interrupting ongoing speech; aria-atomic="true" reads each toast as a whole unit -->
+<div class="toast-container" id="toastContainer"
+     role="status"
+     aria-live="polite"
+     aria-atomic="true"
+     aria-label="Notifications"></div>
+
+
+<!-- Session restore modal -->
+<!-- Restore Session Modal — Premium -->
+<div class="restore-modal-overlay" id="restoreModalOverlay">
+  <div class="restore-modal">
+    <div class="restore-modal-header">
+      <!-- Professional restore icon: clean history clock -->
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Full circle clock face -->
+          <circle cx="12" cy="12" r="9"/>
+          <!-- Clock hands: 12 o'clock to centre, then to 3 o'clock position -->
+          <polyline points="12 7 12 12 16 12"/>
+        </svg>
+      </div>
+      <h3>Restore previous session?</h3>
+      <p>An unsaved session was found from your last visit. Continue where you left off?</p>
+    </div>
+
+    <div class="restore-modal-body">
+      <div class="restore-session-meta" id="restoreSessionMeta">
+        <div class="restore-meta-item">
+          <div class="label">Saved at</div>
+          <div class="value" id="restoreSavedAt">—</div>
+        </div>
+        <div class="restore-meta-item">
+          <div class="label">Class</div>
+          <div class="value" id="restoreClassName">—</div>
+        </div>
+        <div class="restore-meta-item">
+          <div class="label">Students</div>
+          <div class="value" id="restoreStudentCount">—</div>
+        </div>
+        <div class="restore-meta-item">
+          <div class="label">Subjects</div>
+          <div class="value" id="restoreSubjectCount">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="restore-modal-footer">
+      <button class="btn btn-ghost" onclick="discardSession()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+        </svg>
+        Discard
+      </button>
+      <button class="btn btn-primary" onclick="restoreSession()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
+          <circle cx="12" cy="12" r="9"/>
+          <polyline points="12 7 12 12 16 12"/>
+        </svg>
+        Restore session
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Backup / Save modal -->
+<!-- ══════════════════════════════════════════
+     LEGAL MODAL (Privacy Policy & Terms of Service)
+     Shown inline — no new tab, no session restore trigger.
+══════════════════════════════════════════ -->
+<div class="legal-modal-overlay" id="legalModalOverlay" onclick="if(event.target===this)closeLegalModal()">
+  <div class="legal-modal">
+    <div class="legal-modal-header">
+      <div class="legal-modal-title-row">
+        <div class="legal-modal-icon">
+          <svg id="legalModalIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3 id="legalModalTitle">Privacy Policy</h3>
+      </div>
+      <div class="legal-modal-tabs">
+        <button class="legal-tab active" id="legalTabPrivacy" onclick="switchLegalTab('privacy')">Privacy Policy</button>
+        <button class="legal-tab" id="legalTabTerms" onclick="switchLegalTab('terms')">Terms of Service</button>
+      </div>
+      <button class="legal-modal-close" onclick="closeLegalModal()" title="Close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="legal-modal-body" id="legalModalBody">
+      <!-- Content injected by openLegalModal() / switchLegalTab() -->
+    </div>
+    <div class="legal-modal-footer">
+      <span class="legal-modal-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" style="vertical-align:middle;margin-right:4px;flex-shrink:0;">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        GradeFlow stores all data locally on your device. Nothing is sent to any server.
+      </span>
+      <button class="btn btn-primary btn-sm" onclick="closeLegalModal()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ANONYMOUS FEEDBACK MODAL
+     No name, email, or identifying info collected.
+══════════════════════════════════════════ -->
+<div class="feedback-modal-overlay" id="feedbackModalOverlay" onclick="if(event.target===this)closeFeedbackModal()">
+  <div class="feedback-modal">
+    <div class="feedback-modal-header">
+      <div class="feedback-modal-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
+        </svg>
+      </div>
+      <div class="feedback-modal-title-text">
+        <h3>Send Feedback</h3>
+        <p>Anonymous — your identity is never collected</p>
+      </div>
+      <button class="feedback-modal-close" onclick="closeFeedbackModal()" title="Close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="feedback-modal-body">
+      <div class="fb-privacy-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span><strong>No personal info is collected.</strong> GradeFlow doesn't ask for your name, email, or school — and your feedback isn't linked to any account or device.</span>
+      </div>
+
+      <p class="fb-section-label">What's this about?</p>
+      <div class="fb-type-grid">
+        <button class="fb-type-btn" data-type="bug" onclick="fbSelectType('bug')">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2zm0-4h-2V7h2z"/></svg>
+          Bug / Problem
+        </button>
+        <button class="fb-type-btn" data-type="idea" onclick="fbSelectType('idea')">
+          <svg viewBox="0 0 24 24"><path d="M9 21h6v-1H9v1zm3-19a7 7 0 00-4 12.74V17h8v-2.26A7 7 0 0012 2z"/></svg>
+          Feature idea
+        </button>
+        <button class="fb-type-btn" data-type="praise" onclick="fbSelectType('praise')">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.35-9.33-8.5C1.2 9.5 2.9 6 6.1 6 8 6 9.7 7.1 12 9.4 14.3 7.1 16 6 17.9 6c3.2 0 4.9 3.5 3.43 6.5C19 16.65 12 21 12 21z"/></svg>
+          Something I like
+        </button>
+        <button class="fb-type-btn" data-type="other" onclick="fbSelectType('other')">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>
+          Something else
+        </button>
+      </div>
+
+      <p class="fb-section-label">Rate your experience (optional)</p>
+      <div class="fb-rating-row">
+        <button class="fb-star" data-star="1" onclick="fbSetRating(1)" title="1 star" aria-label="1 star"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
+        <button class="fb-star" data-star="2" onclick="fbSetRating(2)" title="2 stars" aria-label="2 stars"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
+        <button class="fb-star" data-star="3" onclick="fbSetRating(3)" title="3 stars" aria-label="3 stars"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
+        <button class="fb-star" data-star="4" onclick="fbSetRating(4)" title="4 stars" aria-label="4 stars"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
+        <button class="fb-star" data-star="5" onclick="fbSetRating(5)" title="5 stars" aria-label="5 stars"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
+      </div>
+
+      <p class="fb-section-label">Your message</p>
+      <textarea class="fb-textarea" id="feedbackText" maxlength="1000" placeholder="Tell us what's working, what's not, or what you'd like to see..." oninput="fbOnTextInput()"></textarea>
+      <div class="fb-char-count"><span id="feedbackCharCount">0</span>/1000</div>
+      <div class="fb-status" id="feedbackStatus"></div>
+    </div>
+
+    <div class="feedback-modal-footer">
+      <button class="btn btn-ghost" id="feedbackCopyBtn" onclick="fbCopyFeedback()" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy Text
+      </button>
+      <button class="btn btn-primary" id="feedbackSendBtn" onclick="fbPrimaryAction()" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span class="fb-btn-label">Send</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar overlay (tablet) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ══════════════════════════════════════════
+     BACKUP & RESTORE MODAL
+
+     Works on all browsers: Chrome/Edge (folder save),
+     Firefox, iOS Safari (manual JSON export/import).
+══════════════════════════════════════════ -->
+<div class="backup-modal-overlay" id="backupModalOverlay" onclick="if(event.target===this)closeBackupModal()">
+  <div class="backup-modal">
+    <!-- Header -->
+    <div class="backup-modal-header">
+      <div class="backup-modal-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </div>
+      <div class="backup-modal-header-text">
+        <h3>Save to Device</h3>
+        <p>Choose how you want to store your data outside the browser</p>
+      </div>
+      <button class="backup-modal-close" onclick="closeBackupModal()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Body: two option cards -->
+    <div class="backup-modal-body">
+
+      <!-- Option 1: Folder save (Chrome/Edge only) -->
+      <div class="backup-option" id="backupOptionFolder">
+        <div class="backup-option-icon backup-option-icon--folder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        </div>
+        <div class="backup-option-body">
+          <div class="backup-option-title">Auto-save to Folder
+            <span class="backup-option-badge backup-option-badge--chrome">Chrome / Edge</span>
+          </div>
+          <div class="backup-option-desc">Pick a folder on your device. GradeFlow saves automatically every 20 seconds — like a real desktop app. Data survives browser resets.</div>
+        </div>
+        <button class="backup-option-btn backup-option-btn--primary" id="backupFolderBtn" onclick="handleFolderSaveOption()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+          Choose Folder
+        </button>
+      </div>
+
+      <div class="backup-modal-divider"><span>or</span></div>
+
+      <!-- Option 2: Manual JSON backup (all browsers) -->
+      <div class="backup-option">
+        <div class="backup-option-icon backup-option-icon--json">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        </div>
+        <div class="backup-option-body">
+          <div class="backup-option-title">Download Backup File
+            <span class="backup-option-badge backup-option-badge--all">All Browsers</span>
+          </div>
+          <div class="backup-option-desc">Downloads a <code>.json</code> backup of all your exams, marks, and settings. Save it anywhere — Downloads, iCloud Drive, Google Drive. Restore it any time.</div>
+          <div class="backup-last-export" id="backupLastExportLabel">No backup yet</div>
+        </div>
+        <div class="backup-option-actions">
+          <button class="backup-option-btn backup-option-btn--export" onclick="exportBackupFile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+          <button class="backup-option-btn backup-option-btn--import" onclick="importBackupFile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Restore
+          </button>
+        </div>
+      </div>
+
+      <!-- Info tip -->
+      <div class="backup-info-tip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Your data never leaves your device. GradeFlow has no server. Browser storage can be cleared by your browser; a backup file is permanent until you delete it.</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="backup-modal-footer">
+      <button class="btn btn-ghost" onclick="closeBackupModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <!-- Collapse/expand toggle button -->
+  <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebarCollapse()" title="Collapse sidebar">
+    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="sidebar-inner">
+  <div class="sidebar-logo">
+    <div class="logo-icon" style="padding:0;background:none;border-radius:10px;overflow:hidden;width:36px;height:36px;flex-shrink:0;">
+      <img src="data:image/png;base64,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" alt="GradeFlow" width="36" height="36" style="width:36px;height:36px;display:block;border-radius:10px;" />
+    </div>
+    <div class="logo-text">
+      <h2>GradeFlow</h2>
+      <p>Smart grade management</p>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Workflow</div>
+    <!-- Exam chip in sidebar (expanded) — includes completion ring -->
+    <div class="sidebar-exam-chip" onclick="openExamManager()" id="sidebarExamChip" title="Manage exams / terms (Ctrl+E)">
+      <div class="sec-ring-wrap" id="sidebarExamRingWrap">
+        <svg class="sec-ring-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="sec-ring-track" cx="12" cy="12" r="10.5" fill="none" stroke-width="2"/>
+          <circle class="sec-ring-arc"   cx="12" cy="12" r="10.5" fill="none" stroke-width="2"
+            stroke-dasharray="65.97 65.97" stroke-dashoffset="65.97"
+            id="sidebarRingArc" transform="rotate(-90 12 12)"/>
+        </svg>
+        <svg class="sidebar-exam-chip-icon" viewBox="0 0 24 24" fill="#60a5fa" width="13" height="13"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+      </div>
+      <span class="sidebar-exam-chip-name" id="sidebarExamName">Loading…</span>
+      <svg class="sidebar-exam-chip-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <!-- Exam chip collapsed: ring + icon, centered -->
+    <div class="sidebar-exam-chip-collapsed" id="sidebarExamChipCollapsed" onclick="openExamManager()" title="Manage exams / terms (Ctrl+E)" style="display:none;justify-content:center;align-items:center;margin:4px 0 8px;cursor:pointer;">
+      <span class="sidebar-exam-chip-collapsed-icon">
+        <div class="sec-ring-wrap sec-ring-wrap--lg" id="sidebarExamRingWrapCollapsed">
+          <svg class="sec-ring-svg" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle class="sec-ring-track" cx="16" cy="16" r="13.5" fill="none" stroke-width="2.5"/>
+            <circle class="sec-ring-arc"   cx="16" cy="16" r="13.5" fill="none" stroke-width="2.5"
+              stroke-dasharray="84.82 84.82" stroke-dashoffset="84.82"
+              id="sidebarRingArcCollapsed" transform="rotate(-90 16 16)"/>
+          </svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        </div>
+      </span>
+    </div>
+    <div class="nav-item active" onclick="goToStep(0)" id="nav-0" data-label="Setup">
+      <span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
+      <span>Setup</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(1)" id="nav-1" data-label="Students">
+      <span class="nav-icon-wrap">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 3a2 2 0 110 4 2 2 0 010-4zm4 12H8v-1c0-2.67 5.33-4 8-4v5z"/></svg>
+        <span class="nav-badge-dot" id="badge-dot-students">0</span>
+      </span>
+      <span>Students</span>
+      <span class="nav-badge" id="badge-students">0</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(2)" id="nav-2" data-label="Subjects">
+      <span class="nav-icon-wrap">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1z"/></svg>
+        <span class="nav-badge-dot" id="badge-dot-subjects">0</span>
+      </span>
+      <span>Subjects</span>
+      <span class="nav-badge" id="badge-subjects">0</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(3)" id="nav-3" data-label="Enter Marks">
+      <span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg></span>
+      <span>Enter Marks</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(4)" id="nav-4" data-label="Results">
+      <span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></span>
+      <span>Results</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(5)" id="nav-5" data-label="Analytics">
+      <span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg></span>
+      <span>Analytics</span>
+    </div>
+    <div class="nav-item" onclick="goToStep(0);setTimeout(function(){openBrandingSetupCard();},80);" id="nav-branding" data-label="School Branding" title="School Branding" style="position:relative;">
+      <span class="nav-icon-wrap" style="position:relative;">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor" style="color:#a78bfa;opacity:0.85;"><path d="M12 3L1 9l4 2.18V18h14v-6.82L23 9zm6 13H6v-5.4l6 3.27 6-3.27V16zm-6-5L3.78 9 12 4.82 20.22 9z"/></svg>
+        <span id="brandingActiveDot" style="position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:#a78bfa;display:none;border:1.5px solid #0f172a;"></span>
+      </span>
+      <span>School Branding</span>
+    </div>
+  </nav>
+  <div class="sidebar-footer" id="sidebarFooter">
+    <div class="dark-mode-toggle" id="darkModeToggle" onclick="toggleDarkMode(event)" title="Toggle dark mode">
+      <div class="dark-mode-toggle-left">
+        <svg id="dmIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <span id="dmLabel">Dark mode</span>
+      </div>
+      <div class="dm-switch" id="dmSwitch"></div>
+    </div>
+    <!-- Collapsed footer: icon-only theme toggle -->
+    <div class="sidebar-footer-icon-btn" id="dmIconBtn" onclick="toggleDarkMode(event)" data-label="Toggle dark mode" title="Toggle dark mode">
+      <svg id="dmIconCollapsed" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </div>
+    <div class="sidebar-footer-text" style="font-size:12px;color:#475569;line-height:1.5;">CREATED BY RSK</div>
+    <div class="gf-legal-links">
+      <a href="#" onclick="openLegalModal('privacy');return false;" title="Privacy Policy">Privacy</a>
+      <a href="#" onclick="openLegalModal('terms');return false;" title="Terms of Service">Terms</a>
+      <a href="#" onclick="openFeedbackModal();return false;" title="Send anonymous feedback">Feedback</a>
+    </div>
+  </div>
+  </div><!-- end sidebar-inner -->
+</aside>
+
+
+<!-- Bottom navigation (mobile) -->
+<!-- Bottom navigation (mobile only) -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bottom-nav-item active" onclick="goToStep(0)" id="bnav-0">
+    <div class="bnav-pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+    Setup
+  </button>
+  <button class="bottom-nav-item" onclick="goToStep(1)" id="bnav-1">
+    <div class="bnav-pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg><span class="bottom-nav-badge" id="bnav-badge-students">0</span></div>
+    Students
+  </button>
+  <button class="bottom-nav-item" onclick="goToStep(2)" id="bnav-2">
+    <div class="bnav-pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1z"/></svg><span class="bottom-nav-badge" id="bnav-badge-subjects">0</span></div>
+    Subjects
+  </button>
+  <button class="bottom-nav-item" onclick="goToStep(3)" id="bnav-3">
+    <div class="bnav-pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg></div>
+    Marks
+  </button>
+  <button class="bottom-nav-item" onclick="goToStep(4)" id="bnav-4">
+    <div class="bnav-pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></div>
+    Results
+  </button>
+  <button class="bottom-nav-item" onclick="goToStep(5)" id="bnav-5">
+    <div class="bnav-pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg></div>
+    Analytics
+  </button>
+  <!-- More button — mobile only, opens the more-sheet -->
+  <button id="bnav-more" onclick="openMoreSheet()" title="More options">
+    <div class="bnav-pill">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+    </div>
+    More
+  </button>
+</nav>
+
+
+<!-- More bottom sheet (mobile) -->
+<!-- ══ More Bottom Sheet (mobile) ══ -->
+<div class="more-sheet-overlay" id="moreSheetOverlay" onclick="if(event.target===this)closeMoreSheet()">
+  <div class="more-sheet" id="moreSheet">
+    <div class="more-sheet-handle"></div>
+    <div class="more-sheet-title">More Options</div>
+
+    <!-- Exam / Term Switcher -->
+    <div class="more-sheet-row" onclick="openExamManager();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon tint-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Switch Exam / Term</div>
+          <div class="more-sheet-row-sub" id="msExamSub">Manage terms &amp; exams</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-muted-shrink"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Dark Mode -->
+    <div class="more-sheet-row" onclick="toggleDarkMode(event);updateMoreSheetDmSwitch()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon">
+          <svg id="msDmIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label" id="msDmLabel">Dark Mode</div>
+          <div class="more-sheet-row-sub" id="msDmSub">Switch theme</div>
+        </div>
+      </div>
+      <div class="ms-dm-switch" id="msDmSwitch"></div>
+    </div>
+
+    <!-- Autosave -->
+    <div class="more-sheet-row" onclick="manualSave();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Save Session</div>
+          <div class="more-sheet-row-sub" id="msSaveTimestamp">Saves data to browser storage</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-muted-shrink"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Save to Device -->
+    <div class="more-sheet-row" id="msSaveDeviceRow" onclick="handleSaveLocationClick();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" id="msSaveDeviceIcon" style="background:rgba(34,197,94,0.12);color:#16a34a;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Save to Device</div>
+          <div class="more-sheet-row-sub" id="msSaveDeviceSub">Choose folder or download backup</div>
+        </div>
+      </div>
+      <div id="msSaveDeviceDot" style="width:8px;height:8px;border-radius:50%;background:#6b7280;flex-shrink:0;"></div>
+    </div>
+
+    <!-- Undo — tap to undo last action, or use History button to open sheet -->
+    <div class="more-sheet-row" id="msUndoRow" style="padding-right:8px;">
+      <div class="more-sheet-row-left" onclick="performUndo();closeMoreSheet()" style="flex:1;min-width:0;">
+        <div class="more-sheet-row-icon slate" id="msUndoIcon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Undo Last Action</div>
+          <div class="more-sheet-row-sub" id="msUndoSub">No actions to undo</div>
+        </div>
+      </div>
+      <button class="ms-undo-history-btn" id="msUndoHistoryBtn" onclick="closeMoreSheet();openUndoHistory();" title="View full undo history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+        History
+      </button>
+    </div>
+
+    <!-- School Branding -->
+    <div class="more-sheet-row" onclick="goToStep(0);setTimeout(function(){openBrandingSetupCard();},80);closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" style="background:rgba(124,58,237,0.1);">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" style="color:#7c3aed;"><path d="M12 3L1 9l4 2.18V18h14v-6.82L23 9zm6 13H6v-5.4l6 3.27 6-3.27V16zm-6-5L3.78 9 12 4.82 20.22 9z"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">School Branding</div>
+          <div class="more-sheet-row-sub">Logo, colours &amp; report header</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-muted-shrink"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Guided Tour -->
+    <div class="more-sheet-row" id="msTourRow" onclick="closeMoreSheet(); setTimeout(function(){ window.gftStartTour && window.gftStartTour(); }, 300);">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" style="background:rgba(37,99,235,0.1);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#2563eb;">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Take the Guide</div>
+          <div class="more-sheet-row-sub">Replay the guided walkthrough</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-muted-shrink"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Send Feedback -->
+    <div class="more-sheet-row" onclick="openFeedbackModal();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" style="background:rgba(14,165,233,0.1);color:#0ea5e9;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Send Feedback</div>
+          <div class="more-sheet-row-sub">Anonymous — your identity is never collected</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-muted-shrink"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Reset All -->
+    <div class="more-sheet-row" onclick="openResetConfirm();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Reset All</div>
+          <div class="more-sheet-row-sub">Clear all data and start over</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-muted-shrink"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Legal links footer -->
+    <div class="more-sheet-legal">
+      <a href="#" onclick="openLegalModal('privacy');closeMoreSheet();return false;">Privacy Policy</a>
+      <span class="more-sheet-legal-dot">·</span>
+      <a href="#" onclick="openLegalModal('terms');closeMoreSheet();return false;">Terms of Service</a>
+      <span class="more-sheet-legal-dot">·</span>
+      <a href="#" onclick="openFeedbackModal();closeMoreSheet();return false;">Feedback</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ School Branding Panel ══ -->
+<!-- Branding overlay kept as hidden stub so existing JS refs don't break -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN CONTENT AREA
+     Topbar · Steps nav · Section 0 (Setup) · Section 1 (Students)
+     Section 2 (Subjects) · Section 3 (Marks) · Section 4 (Results)
+     Section 5 (Analytics)
+════════════════════════════════════════════════════════════ -->
+<div id="brandingOverlay" style="display:none;"></div>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" onclick="openSidebar()" title="Open menu" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div>
+        <h1 id="topbarTitle">Class Setup</h1>
+        <p id="topbarSub">Enter your class information to get started</p>
+      </div>
+      <!-- Mobile-only save status pill — tappable, shows live save state -->
+      <button class="mobile-save-pill unsaved" id="mobileSavePill"
+              onclick="manualSave()" title="Tap to save"
+              aria-label="Save status — tap to save">
+        <span class="msp-dot"></span>
+        <span id="mobileSavePillLabel">Unsaved</span>
+      </button>
+    </div>
+    <!-- Hidden element — keeps examSelectorName ID alive for JS compatibility -->
+    <span id="examSelectorName" style="display:none;" aria-hidden="true"></span>
+    <div class="topbar-right">
+      <!-- Desktop autosave status pill — always visible, fades when saved, amber when dirty -->
+      <button class="autosave-timestamp-pill unsaved" id="autosaveTimestampPill"
+              onclick="manualSave()" title="Click to save now"
+              aria-label="Save status — click to save">
+        <span class="atp-dot" id="autosaveDot"></span>
+        <span class="atp-label" id="autosaveTimestamp">Not saved yet</span>
+      </button>
+      <!-- Save button (primary action — always visible) -->
+      <button class="autosave-btn" id="autosaveBtn" onclick="manualSave()" title="Save session to browser storage">
+        <span class="save-dot" id="saveDot"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span class="save-label">Save</span>
+      </button>
+      <!-- Undo split-button: left = perform undo, right = chevron opens history dropdown -->
+      <div class="undo-panel-wrap undo-btn-topbar" id="undoPanelWrap">
+        <button class="undo-btn undo-btn-action" id="undoBtnTopbar" onclick="performUndo()" title="Undo last action (Ctrl+Z / Cmd+Z)" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+          Undo
+          <span class="undo-count" id="undoCountBadge">0</span>
+        </button>
+        <button class="undo-btn undo-btn-chevron" id="undoChevronBtn" onclick="toggleUndoDropdown()" title="Show undo history" aria-haspopup="true" aria-expanded="false" disabled>
+          <svg id="undoChevronIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="undo-history-panel" id="undoHistoryPanel" role="menu" aria-label="Undo history">
+          <div class="undo-panel-header">
+            <span>Undo History</span>
+            <button onclick="closeUndoDropdown()" aria-label="Close undo history">✕</button>
+          </div>
+          <div class="undo-history-list" id="undoHistoryList"></div>
+          <div class="undo-panel-footer">
+            <button class="btn btn-ghost btn-sm" onclick="closeUndoDropdown()">Close</button>
+            <button class="btn btn-primary btn-sm" id="undoPanelUndoBtn" onclick="performUndo();closeUndoDropdown()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="12" height="12"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+              Undo last
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- 🧭 Tour button — desktop header only -->
+      <button class="topbar-tour-btn" id="topbarTourBtn"
+        onclick="window.gftStartTour && window.gftStartTour()"
+        title="Take the interactive Guide"
+        aria-label="Take the interactive Guide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Guide</span>
+      </button>
+      <!-- ☀/🌙 Theme toggle — desktop header only (hidden on mobile via CSS) -->
+      <button class="topbar-theme-toggle" id="topbarThemeToggle" onclick="toggleDarkMode(event)" title="Toggle light / dark mode" aria-label="Toggle light / dark mode">
+        <span class="ttt-track" id="topbarThemeTrack">
+          <span class="ttt-thumb" id="topbarThemeThumb">
+            <span class="ttt-icon ttt-sun" id="topbarThemeSun">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
+                <circle cx="12" cy="12" r="4"/>
+                <line x1="12" y1="2" x2="12" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="4.22" y1="4.22" x2="6.34" y2="6.34" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="17.66" y1="17.66" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="2" y1="12" x2="5" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="19" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="ttt-icon ttt-moon" id="topbarThemeMoon">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            </span>
+          </span>
+        </span>
+      </button>
+
+      <!-- ⋯ Overflow menu — houses secondary actions -->
+      <div class="topbar-overflow-wrap" id="topbarOverflowWrap">
+        <button class="topbar-overflow-btn" id="topbarOverflowBtn"
+          onclick="toggleTopbarOverflow()"
+          title="More options"
+          aria-label="More options"
+          aria-haspopup="true"
+          aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+        </button>
+        <div class="topbar-overflow-menu" id="topbarOverflowMenu" role="menu">
+          <div class="overflow-menu-section overflow-appearance-section">Appearance</div>
+          <button class="overflow-menu-item overflow-appearance-section" id="overflowThemeBtn" onclick="toggleDarkMode(event);closeTopbarOverflow()" aria-label="Toggle dark mode">
+            <svg id="overflowThemeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <span class="omi-label">
+              <span id="overflowThemeLabel">Dark mode</span>
+              <span class="omi-sub" id="overflowThemeSub">Switch to dark theme</span>
+            </span>
+            <div class="omi-theme-switch" id="overflowThemeSwitch"></div>
+          </button>
+          <div class="overflow-menu-divider overflow-appearance-section"></div>
+          <div class="overflow-menu-section">Save location</div>
+          <button class="overflow-menu-item" id="overflowSaveLocationBtn" onclick="handleSaveLocationClick();closeTopbarOverflow()">
+            <span class="omi-status-dot" id="overflowSaveLocationDot"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            <span class="omi-label">
+              <span id="overflowSaveLocationLabel">Browser only</span>
+              <span class="omi-sub">Click to choose a folder on your device</span>
+            </span>
+          </button>
+          <div class="overflow-menu-divider"></div>
+          <div class="overflow-menu-section">Danger zone</div>
+          <button class="overflow-menu-item danger" id="resetBtn" onclick="openResetConfirm();closeTopbarOverflow()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            <span class="omi-label">
+              Reset all data
+              <span class="omi-sub">Clears all students, marks &amp; results</span>
+            </span>
+          </button>
+        </div>
+      </div>
+      <!-- Keep hidden save-location-btn stub so existing JS refs don't break -->
+      <button id="saveLocationBtn" style="display:none;" onclick="handleSaveLocationClick()"></button>
+      <span id="saveLocationDot" style="display:none;"></span>
+      <span id="saveLocationLabel" style="display:none;">Browser only</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Steps nav — two-zone design -->
+    <div class="steps-nav" id="stepsNav">
+
+      <!-- Zone A: Setup steps (0–2) — collapsible rail -->
+      <div class="steps-setup-zone" id="stepsSetupZone">
+        <!-- Header: click to expand/collapse -->
+        <div class="steps-setup-header" onclick="toggleSetupZone()" id="stepsSetupHeader" title="Click to expand / collapse setup steps">
+          <span class="setup-zone-label">Setup</span>
+          <!-- Summary pills — always visible, click them to jump -->
+          <div class="setup-summary-pills" id="setupSummaryPills">
+            <span class="setup-summary-pill" id="ssp-0" onclick="event.stopPropagation();goToStep(0)" title="Go to Class Setup">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+              Setup
+            </span>
+            <span class="setup-summary-pill" id="ssp-1" onclick="event.stopPropagation();goToStep(1)" title="Go to Students">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
+              Students
+            </span>
+            <span class="setup-summary-pill" id="ssp-2" onclick="event.stopPropagation();goToStep(2)" title="Go to Subjects">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1z"/></svg>
+              Subjects
+            </span>
+          </div>
+          <!-- Expand/collapse chevron -->
+          <span class="setup-zone-chevron" id="setupZoneChevron" title="Expand setup steps">
+            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </span>
+        </div>
+        <!-- Expandable step details -->
+        <div class="steps-setup-body" id="stepsSetupBody">
+          <div class="step-setup active" onclick="goToStep(0)" id="step-0">
+            <div class="step-num">1</div>
+            <div class="step-text">
+              <div class="step-title">Setup</div>
+              <div class="step-desc">Class info</div>
+            </div>
+          </div>
+          <div class="step-setup" onclick="goToStep(1)" id="step-1">
+            <div class="step-num">2</div>
+            <div class="step-text">
+              <div class="step-title">Students</div>
+              <div class="step-desc">Add names</div>
+            </div>
+          </div>
+          <div class="step-setup" onclick="goToStep(2)" id="step-2">
+            <div class="step-num">3</div>
+            <div class="step-text">
+              <div class="step-title">Subjects</div>
+              <div class="step-desc">Add subjects</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone B: Active-use steps (3–5) — always visible, prominent -->
+      <div class="steps-active-zone">
+        <div class="step-active locked" onclick="goToStep(3)" id="step-3" data-lock-tip="Complete setup first">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <div class="step-title">Enter Marks</div>
+            <div class="step-desc">Record scores</div>
+          </div>
+          <span class="step-active-badge">Active</span>
+          <svg class="step-lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="step-active locked" onclick="goToStep(4)" id="step-4" data-lock-tip="Complete setup first">
+          <div class="step-num">5</div>
+          <div class="step-text">
+            <div class="step-title">Results</div>
+            <div class="step-desc">View &amp; export</div>
+          </div>
+          <span class="step-active-badge">Active</span>
+          <svg class="step-lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="step-active locked" onclick="goToStep(5)" id="step-5" data-lock-tip="Complete setup first">
+          <div class="step-num">6</div>
+          <div class="step-text">
+            <div class="step-title">Analytics</div>
+            <div class="step-desc">Subject insights</div>
+          </div>
+          <span class="step-active-badge">Active</span>
+          <svg class="step-lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+      </div>
+
+    </div><!-- /steps-nav -->
+
+    <!-- Step 0: Setup -->
+    <div class="section active" id="section-0">
+      <!-- ── Class Template Import / Export Banner ── -->
+      <div class="card" id="ctplBanner" style="margin-bottom:14px;border:1.5px dashed var(--primary);background:var(--primary-light);">
+        <div class="card-body" style="padding:16px 18px;">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:var(--primary);display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="20" height="20"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="15"/></svg>
+            </div>
+            <div style="flex:1;min-width:180px;">
+              <div style="font-size:14px;font-weight:700;color:var(--primary-dark);margin-bottom:2px;">Have a saved class template?</div>
+              <div style="font-size:12.5px;color:var(--text-muted);line-height:1.5;">Load a previously exported JSON to pre-fill students, subjects and class info.</div>
+            </div>
+            <button class="btn-template-import" onclick="openTemplateModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="15"/></svg>
+              Import Class Template
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card setup-unified-card" style="margin-bottom:20px;" id="brandingSetupCard">
+
+        <!-- ── Class Information ── -->
+        <div class="card-header">
+          <div>
+            <h3>Class information</h3>
+            <p>Basic details about your class</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-row" style="margin-bottom:14px;">
+            <div class="form-group">
+              <label>Class / Section name *</label>
+              <input type="text" id="className" placeholder="e.g. Grade 8 — Section A" />
+            </div>
+            <div class="form-group">
+              <label>Academic year</label>
+              <input type="text" id="academicYear" placeholder="e.g. 2024–2025" />
+            </div>
+          </div>
+            <div class="form-row" style="margin-bottom:14px;">
+            <div class="form-group">
+              <label>Exam / Test label <span style="font-weight:400;color:var(--text-muted);">(optional)</span> <span style="font-weight:400;font-size:11px;color:var(--text-light);">— also shown as term label on exported reports</span></label>
+              <div class="exam-label-input-wrap">
+                <input type="text" id="examLabel" placeholder="e.g. Mid-Year Exam, Term 1 Test" oninput="syncTermLabel()" />
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Teacher / Incharge name</label>
+              <input type="text" id="teacherName" placeholder="e.g. Mr. Ahmed Hassan" />
+            </div>
+          </div>
+          <!-- schoolName is a hidden proxy kept for backward-compat; value is always
+               mirrored from brandingSchoolFullName via syncSchoolName() -->
+          <input type="hidden" id="schoolName" />
+        </div>
+
+        <!-- ── School Branding divider header — connected to the card above ── -->
+        <div class="branding-card-header" onclick="toggleBrandingSetupCard()" id="brandingSetupCardHeader">
+          <div class="branding-card-icon">
+            <svg viewBox="0 0 24 24" fill="#7c3aed" width="18" height="18"><path d="M12 3L1 9l4 2.18V18h14v-6.82L23 9zm6 13H6v-5.4l6 3.27 6-3.27V16zm-6-5L3.78 9 12 4.82 20.22 9z"/></svg>
+          </div>
+          <div class="branding-card-text">
+            <div class="branding-card-title">
+              School Branding
+              <span id="brandingSetupActiveBadge" class="branding-active-badge" style="display:none;">Active</span>
+            </div>
+            <div class="branding-card-desc">Customise exported reports with your school&#x2019;s identity</div>
+          </div>
+          <div class="branding-card-toggle">
+            <span id="brandingSetupToggleLabel" class="branding-toggle-label">Optional</span>
+            <div class="branding-chevron-wrap">
+              <svg id="brandingSetupChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+          </div>
+        </div>
+        <div id="brandingSetupBody" style="display:none;">
+          <div style="padding:20px 20px 4px;display:flex;flex-direction:column;gap:20px;">
+
+            <!-- Logo -->
+            <div>
+              <div class="branding-section-title">School Logo</div>
+              <div class="branding-logo-zone" id="brandingLogoZone" onclick="document.getElementById('brandingLogoInput').click()">
+                <img id="brandingLogoPreview" class="branding-logo-preview" src="" alt="Logo preview" />
+                <div class="branding-logo-placeholder" id="brandingLogoPlaceholder">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+                <div class="branding-logo-info">
+                  <strong id="brandingLogoLabel">Click to upload logo</strong>
+                  <span id="brandingLogoSub">PNG, JPG, SVG — shown in exported PDF &amp; JPEG reports</span>
+                  <div class="branding-logo-actions" id="brandingLogoActions" style="display:none;">
+                    <button class="branding-logo-btn" onclick="event.stopPropagation();document.getElementById('brandingLogoInput').click()">Change</button>
+                    <button class="branding-logo-btn danger" onclick="event.stopPropagation();clearBrandingLogo()">Remove</button>
+                  </div>
+                </div>
+              </div>
+              <input type="file" id="brandingLogoInput" accept="image/*" style="display:none;" onchange="handleBrandingLogoUpload(event)" />
+            </div>
+
+            <!-- Primary Colour -->
+            <div>
+              <div class="branding-section-title">Report Header Colour</div>
+              <div class="branding-color-row">
+                <div class="branding-color-swatch-wrap">
+                  <div class="branding-color-swatch" id="brandingColorSwatch" style="background:#1a56db;"></div>
+                  <input type="color" id="brandingColorPicker" value="#1a56db" oninput="onBrandingColorChange(this.value)" />
+                </div>
+                <div class="branding-color-info">
+                  <strong>Header accent colour</strong>
+                  <span>Used for the report header border and highlights</span>
+                  <div class="branding-color-presets" id="brandingColorPresets">
+                    <div class="branding-color-preset" style="background:#1a56db;" onclick="setBrandingColor('#1a56db')" title="Blue"></div>
+                    <div class="branding-color-preset" style="background:#7c3aed;" onclick="setBrandingColor('#7c3aed')" title="Purple"></div>
+                    <div class="branding-color-preset" style="background:#059669;" onclick="setBrandingColor('#059669')" title="Green"></div>
+                    <div class="branding-color-preset" style="background:#dc2626;" onclick="setBrandingColor('#dc2626')" title="Red"></div>
+                    <div class="branding-color-preset" style="background:#f59e0b;" onclick="setBrandingColor('#f59e0b')" title="Amber"></div>
+                    <div class="branding-color-preset" style="background:#0d9488;" onclick="setBrandingColor('#0d9488')" title="Teal"></div>
+                    <div class="branding-color-preset" style="background:#db2777;" onclick="setBrandingColor('#db2777')" title="Pink"></div>
+                    <div class="branding-color-preset" style="background:#111827;" onclick="setBrandingColor('#111827')" title="Black"></div>
+                  </div>
+                </div>
+                <input type="text" class="branding-color-hex" id="brandingColorHex" value="#1a56db" maxlength="7"
+                  oninput="onBrandingColorHexInput(this.value)" placeholder="#1a56db" />
+              </div>
+            </div>
+
+            <!-- School Info -->
+            <div>
+              <div class="branding-section-title">School Information</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div class="branding-field-row">
+                  <div class="branding-field">
+                    <label>School Full Name <span style="font-weight:400;font-size:11px;color:var(--text-muted);">— also used as school name on reports</span></label>
+                    <input type="text" id="brandingSchoolFullName" placeholder="e.g. Sunrise Academy" oninput="updateBrandingPreview();syncSchoolName()" />
+                  </div>
+                </div>
+                <div class="branding-field">
+                  <label>School Address</label>
+                  <textarea id="brandingAddress" rows="2" placeholder="e.g. 42 Temple Road, Colombo 03, Sri Lanka" oninput="updateBrandingPreview()"></textarea>
+                </div>
+                <div class="branding-field-row">
+                  <div class="branding-field">
+                    <label>Principal / HoD Name</label>
+                    <input type="text" id="brandingPrincipal" placeholder="e.g. Mrs. Jayasuriya" oninput="updateBrandingPreview()" />
+                  </div>
+                </div>
+                <!-- Term / Year Label is sourced from Exam / Test label in Class Information above -->
+                <input type="hidden" id="brandingTermLabel" />
+              </div>
+            </div>
+
+            <!-- Export Options -->
+            <div>
+              <div class="branding-section-title">Export Options</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <div class="branding-toggle-row">
+                  <div class="branding-toggle-info">
+                    <strong>Teacher signature line</strong>
+                    <span>Adds a signature block at the bottom of exported reports</span>
+                  </div>
+                  <div class="branding-toggle-switch" id="brandingSigToggle" onclick="toggleBrandingSig()"></div>
+                </div>
+                <div class="branding-toggle-row">
+                  <div class="branding-toggle-info">
+                    <strong>Show school address in export</strong>
+                    <span>Prints the address below the school name</span>
+                  </div>
+                  <div class="branding-toggle-switch" id="brandingAddressToggle" onclick="toggleBrandingAddress()"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Preview -->
+            <div>
+              <div class="branding-section-title">Preview</div>
+              <div class="branding-preview" id="brandingPreviewCard">
+                <div class="branding-preview-header" id="brandingPreviewHeader">
+                  <img class="branding-preview-logo" id="brandingPreviewLogo" src="" alt="" />
+                  <div class="branding-preview-logo-placeholder" id="brandingPreviewLogoPlaceholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </div>
+                  <div class="branding-preview-text">
+                    <div class="branding-preview-school" id="brandingPreviewSchool" style="color:#1a56db;">SUNRISE ACADEMY</div>
+                    <div class="branding-preview-title">Result Sheet &mdash; Grade 8A</div>
+                    <div class="branding-preview-meta" id="brandingPreviewMeta">Class Teacher: Mr. Ahmed &nbsp;&bull;&nbsp; First Term 2025</div>
+                  </div>
+                </div>
+                <div class="branding-preview-bar" id="brandingPreviewBar" style="background:#1a56db;"></div>
+                <div class="branding-preview-footer" id="brandingPreviewFooter">
+                  <span id="brandingPreviewAddr" style="display:none;font-size:10px;color:#6b7280;"></span>
+                  <span style="margin-left:auto;">Generated: <span id="brandingPreviewDate"></span></span>
+                  <span class="branding-preview-sig" id="brandingPreviewSig" style="display:none;">Signature: ___________</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <!-- Branding card footer actions -->
+          <div style="display:flex;gap:8px;padding:14px 20px 18px;border-top:1px solid var(--border);margin-top:16px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="resetBranding()">Reset to defaults</button>
+            <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="saveBrandingFromSetup()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Branding
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-nav-row" style="display:flex;gap:10px;padding:14px 14px 4px;flex-wrap:wrap;">
+        <button class="btn btn-sm btn-export-tpl" style="flex:0 0 auto;" onclick="exportClassTemplate()" title="Export class setup as JSON template">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Template
+        </button>
+        <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="goToStep(1)">
+          Next: Add students
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 1: Students -->
+    <div class="section" id="section-1">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div>
+            <h3>Add students</h3>
+            <p>Enter each student's index number and full name, then press Enter or click Add</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="addSampleStudents()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Load sample names
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="form-row" style="margin-bottom:6px;">
+            <div class="form-group" style="flex:0 0 110px;min-width:90px;max-width:130px;">
+              <label>Index No.</label>
+              <input type="text" id="studentIndexInput" placeholder="e.g. 01" tabindex="0"
+                onkeydown="if(event.key==='Enter') document.getElementById('studentInput').focus()" />
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Student full name</label>
+              <input type="text" id="studentInput" placeholder="Type student name and press Enter…" tabindex="0"
+                onkeydown="studentInputKeydown(event)" />
+            </div>
+            <div style="padding-top:22px;">
+              <button class="btn btn-primary" id="btnAddStudent" onclick="addStudent()" tabindex="0"
+                onkeydown="if(event.key==='Tab'&&!event.shiftKey){event.preventDefault();document.getElementById('btnNextSubjects').focus();}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                Add
+              </button>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+            💡 Index number is optional — leave blank to auto-assign (1, 2, 3…). You can edit any student's index by clicking on it in the list below.
+          </div>
+          <div id="studentCount" style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">0 students added</div>
+          <div class="student-list-grid" id="studentList">
+            <span style="font-size:13px;color:var(--text-light);padding:4px 0;">No students yet</span>
+          </div>
+        </div>
+      </div>
+      <div class="section-nav-row" style="display:flex;gap:10px;padding:14px 14px 4px;">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="goToStep(0)" tabindex="0">← Back</button>
+        <button id="btnNextSubjects" class="btn btn-primary" style="flex:2;justify-content:center;" onclick="goToStep(2)" tabindex="0">
+          Next: Add subjects
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Subjects -->
+    <div class="section" id="section-2">
+
+      <!-- ── Add subject card ── -->
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-header">
+          <div>
+            <h3>Add subjects</h3>
+            <p>Add each subject with its category and maximum marks</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="addSampleSubjects()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Load sample
+          </button>
+        </div>
+        <div class="card-body">
+
+          <!-- ── SECTION A: Categories ── -->
+          <div style="margin-bottom:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text);">Subject Groups <span style="font-size:11px;font-weight:500;color:var(--text-muted);">(Categories)</span></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.5;">
+                  Groups help organise subjects. Set each group as <strong>Required</strong> (everyone takes all subjects) or <strong>Choose one</strong> (each student picks one subject from the group).
+                </div>
+              </div>
+            </div>
+
+            <!-- Category cards list -->
+            <div id="cat-order-hint">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="9" cy="3" r="1"/><circle cx="15" cy="3" r="1"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="9" r="1"/><circle cx="9" cy="15" r="1"/><circle cx="15" cy="15" r="1"/><circle cx="9" cy="21" r="1"/><circle cx="15" cy="21" r="1"/></svg>
+              Drag the <strong style="font-weight:700;">⠿</strong> handle on any group to reorder — this controls column order in Marks &amp; Results tables.
+            </div>
+            <div id="categoryQuickBtns" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px;">
+              <!-- rendered by JS -->
+            </div>
+
+            <!-- Add new category row -->
+            <div class="add-group-row" style="display:flex;gap:8px;align-items:center;">
+              <input type="text" id="newCategoryInput" placeholder="New group name (e.g. Languages)…"
+                list="categoryDatalist"
+                onkeydown="if(event.key==='Enter') addCategory()" />
+              <datalist id="categoryDatalist"></datalist>
+              <button class="btn btn-ghost btn-sm" onclick="addCategory()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M12 5v14M5 12h14"/></svg>
+                Add group
+              </button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- ── SECTION B: Add Subject ── -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">Add a Subject</div>
+            <div class="form-row" style="margin-bottom:6px;">
+              <div class="form-group" style="flex:2;">
+                <label>Subject name</label>
+                <div class="ac-wrap">
+                  <input type="text" id="subjectInput" placeholder="e.g. Mathematics" autocomplete="off"
+                    oninput="acSearch(this.value)"
+                    onkeydown="acKeydown(event)"
+                    onfocus="acSearch(this.value)"
+                    onblur="setTimeout(acHide,150)" />
+                  <ul class="ac-dropdown" id="acDropdown" role="listbox"></ul>
+                </div>
+              </div>
+              <div class="form-group" style="flex:1;min-width:90px;max-width:120px;">
+                <label>Max marks</label>
+                <input type="number" id="maxMarkInput" placeholder="100" min="1"
+                  onkeydown="if(event.key==='Enter') addSubject()" />
+              </div>
+              <div style="padding-top:22px;">
+                <button class="btn btn-primary" onclick="addSubject()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <!-- Group picker -->
+            <div style="margin-bottom:4px;">
+              <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:6px;">Assign to group <span style="font-weight:400;opacity:0.6;">(optional)</span></label>
+              <div id="subjectCategoryPicker" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+                <!-- rendered by JS -->
+              </div>
+              <input type="hidden" id="subjectCategoryInput" value="" />
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- ── Subject list grouped by category ── -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Added Subjects</div>
+            <div id="subjectList">
+              <span style="font-size:13px;color:var(--text-light);padding:4px 0;">No subjects yet — add a subject above</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="section-nav-row" style="display:flex;gap:10px;padding:14px 14px 4px;">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="goToStep(1)">← Back</button>
+        <button class="btn btn-primary" style="flex:2;justify-content:center;" onclick="goToStep(3)">
+          Next: Enter marks
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 3: Marks -->
+    <div class="section" id="section-3">
+      <div id="marks-empty" class="card">
+        <div class="empty-state">
+          <div class="empty-state-icon" style="background:#ebf2ff;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1a56db" stroke-width="1.8"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+          </div>
+          <h3>Ready to enter marks</h3>
+          <p>Add your students and subjects first, then come back here to record scores.</p>
+          <div class="empty-state-actions">
+            <button class="empty-cta-btn" onclick="goToStep(1)">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
+              Add Students
+            </button>
+            <button class="empty-cta-btn-ghost" onclick="goToStep(2)">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1z"/></svg>
+              Add Subjects
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="marks-content" style="display:none;">
+        <!-- Keyboard navigation hint bar (desktop only) -->
+        <div class="kb-hint-bar" id="kbHintBar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="flex-shrink:0;color:#1a56db;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg>
+          <span><span class="kb-key">Tab</span> move right</span>
+          <span class="kb-sep">·</span>
+          <span><span class="kb-key">Enter</span> move down</span>
+          <span class="kb-sep">·</span>
+          <span><span class="kb-key">↑</span><span class="kb-key">↓</span><span class="kb-key">←</span><span class="kb-key">→</span> navigate</span>
+          <span class="kb-sep">·</span>
+          <span><span class="kb-key">Shift+Tab</span> move left</span>
+          <span class="kb-sep">·</span>
+          <span title="Press A on any cell to mark absent. On an AB cell: A or Enter clears it; arrow keys navigate away"><span class="kb-key" style="color:#dc2626;border-color:#fca5a5;background:#fef2f2;">A</span> mark absent</span>
+          <span style="margin-left:auto;color:#6b7280;">Click any cell to start</span>
+          <button class="kb-help-btn" id="kbHelpBtn" onclick="openShortcutModal()" title="Keyboard shortcut reference (Shift+?)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Shortcuts
+          </button>
+        </div>
+        <!-- Toolbar -->
+        <div class="marks-toolbar">
+          <div class="marks-toolbar-left">
+            <p class="marks-hint">Enter marks. Blank = 0. For <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11" style="flex-shrink:0;vertical-align:middle;margin-right:3px;margin-top:-1px"><circle cx="12" cy="12" r="9"/><polyline points="9 12 11 14 15 10"/></svg>elective groups, entering a mark for one subject <strong>automatically locks</strong> the other subjects in that group — clear the mark to unlock.</p>
+            <div class="grade-scale-row">
+              <span class="grade-scale-label">Grading:</span>
+              <div id="currentGradeBadges"></div>
+              <button class="grade-edit-link" onclick="openGradePanel()">Edit</button>
+            </div>
+          </div>
+          <div class="marks-toolbar-right">
+            <button class="btn btn-grading-tint btn-sm" onclick="openGradePanel()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <span class="marks-toolbar-btn-text">Grading</span>
+            </button>
+            <button class="btn btn-warning-tint btn-sm" onclick="openPassMarkPanel()" title="Set pass mark per subject">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              <span class="marks-toolbar-btn-text">Pass Marks</span>
+            </button>
+            <button class="btn btn-info-tint btn-sm" onclick="openImportModal()" title="Import marks from CSV or Excel file">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span class="marks-toolbar-btn-text">Import CSV/Excel</span>
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="fillSampleData()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <span class="marks-toolbar-btn-text">Sample</span>
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="computeResults()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 11l3 3L22 4"/></svg>
+              <span class="marks-toolbar-btn-text">Calculate</span>
+            </button>
+            <!-- Mobile-only inline Help button — replaces the floating FAB -->
+            <button class="btn btn-ghost btn-sm marks-help-btn-mobile" onclick="openShortcutModal()" title="Help & tips">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="currentColor" stroke-width="1"/></svg>
+              <span class="marks-toolbar-btn-text">Help</span>
+            </button>
+          </div>
+        </div>
+        <!-- Desktop table view -->
+        <div class="marks-table-wrap">
+          <table id="marksTable"></table>
+        </div>
+        <!-- Mobile card view -->
+        <div id="marksCardView" class="marks-card-list"></div>
+      </div>
+      <div class="section-nav-row" style="display:flex;gap:10px;padding:14px 14px 4px;">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="goToStep(2)">← Back</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Results -->
+    <div class="section" id="section-4">
+      <div id="results-empty" class="card">
+        <div class="empty-state">
+          <div class="empty-state-icon" style="background:#ecfdf5;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          </div>
+          <h3>No results calculated yet</h3>
+          <p>Head to the Marks tab, enter your scores, then hit <strong>Calculate</strong> to generate results.</p>
+          <div class="empty-state-actions">
+            <button class="empty-cta-btn" onclick="goToStep(3)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+              Go to Enter Marks
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="results-content" style="display:none;">
+        <!-- Print-only header: hidden on screen, shown when printing -->
+        <div class="print-only-header" style="display:none;">
+          <div id="printSchoolName" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin-bottom:3px;"></div>
+          <div id="printTitle" style="font-size:20px;font-weight:800;color:#111827;margin-bottom:3px;"></div>
+          <div id="printTeacher" style="font-size:12px;color:#6b7280;"></div>
+          <div id="printDate" style="font-size:11px;color:#9ca3af;margin-top:2px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid #1a56db;"></div>
+        </div>
+        <div class="metrics-grid" id="summaryMetrics"></div>
+
+        <div class="results-action-row">
+          <!-- ── Group 1: Export & Share actions ── -->
+          <div class="action-group action-group--export">
+            <button class="btn btn-ghost btn-download-excel" onclick="downloadExcel()" title="Download results as Excel spreadsheet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span>Download Excel</span>
+            </button>
+            <button class="btn btn-ghost btn-share-export" onclick="openShareModal()" title="Share or export results in multiple formats">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Share / Export</span>
+            </button>
+            <button class="btn btn-ghost btn-student-cards" onclick="openStudentCardModal()" title="Export individual student report cards as PDF">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Student Cards</span>
+            </button>
+            <button class="btn btn-ghost" onclick="printResults()" title="Print results table">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span>Print</span>
+            </button>
+          </div>
+
+          <!-- ── Group 2: View controls ── -->
+          <div class="action-group action-group--view">
+            <button class="btn btn-ghost btn-show-grades" id="toggleSubjGradesBtn" onclick="toggleSubjectGradesInline()" title="Show/hide subject grades inline in the results table">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span id="toggleSubjGradesBtnLabel">Show Grades</span>
+              <span id="toggleSubjGradesIndicator" class="grades-toggle-track">
+                <span id="toggleSubjGradesThumb" class="grades-toggle-thumb"></span>
+              </span>
+            </button>
+          </div>
+
+          <!-- ── Group 3: Navigation ── -->
+          <div class="action-group action-group--nav">
+            <button class="btn btn-ghost btn-nav-back" onclick="goToStep(3)" title="Go back to Enter Marks">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+              <span>Edit Marks</span>
+            </button>
+            <button class="btn btn-ghost btn-subject-analytics" onclick="goToStep(5)" title="View subject-level analytics">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg>
+              <span>Subject Analytics</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- ── Search / Filter / Sort toolbar ── -->
+        <div id="resultsFilterBar" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;margin-top:8px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 10px;box-shadow:var(--shadow);">
+          <!-- Search box -->
+          <div style="position:relative;flex:3 1 0;min-width:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input id="resultsSearchInput" type="text" placeholder="Search by name or index…"
+              oninput="applyResultsFilter()"
+              style="width:100%;padding:8px 10px 8px 32px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;color:var(--text);background:var(--bg);transition:border-color 0.15s,box-shadow 0.15s;"
+              onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 0 3px rgba(96,165,250,0.15)';this.style.background='var(--surface)'"
+              onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none';this.style.background='var(--bg)'" />
+          </div>
+          <!-- Filter dropdown -->
+          <div style="position:relative;flex:1 0 0;min-width:0;">
+            <select id="resultsFilterSelect" onchange="applyResultsFilter()"
+              style="appearance:none;-webkit-appearance:none;padding:8px 28px 8px 10px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;color:var(--text);background:var(--bg);cursor:pointer;transition:border-color 0.15s;width:100%;min-width:0;">
+              <option value="all">All students</option>
+              <option value="pass">✓ Pass only</option>
+              <option value="fail">✗ Fail only</option>
+              <option value="agrade">★ A-grade only</option>
+            </select>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+          <!-- Right-side group: always in DOM, no layout shift. Visibility toggled instead of display. -->
+          <div id="resultsFilterRightGroup" style="display:flex;align-items:center;gap:8px;flex-shrink:0;visibility:hidden;">
+            <!-- Filter count badge -->
+            <div id="resultsFilterCount" style="font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap;">
+              <span id="resultsFilterCountText"></span>
+            </div>
+            <!-- Export filtered -->
+            <button id="exportFilteredBtn" onclick="downloadExcelFiltered()" title="Export filtered view to Excel"
+              style="display:inline-flex;flex-shrink:0;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--success);color:var(--success);background:var(--success-light);font-family:inherit;transition:all 0.15s;white-space:nowrap;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Export filtered
+            </button>
+            <!-- Clear filters -->
+            <button id="clearFiltersBtn" onclick="clearResultsFilter()" title="Clear all filters"
+              style="display:inline-flex;flex-shrink:0;align-items:center;gap:5px;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);color:var(--text-muted);background:none;font-family:inherit;transition:all 0.15s;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Desktop table -->
+        <!-- min-height keeps the table container a stable height so the page
+             doesn't shrink/expand when search filters reduce visible rows. -->
+        <div class="table-wrap results-table-wrap" id="resultsTableWrap" style="min-height:420px;">
+          <table id="resultsTable"></table>
+        </div>
+        <!-- Mobile result cards -->
+        <div id="resultsCardView" class="results-card-list"></div>
+      </div>
+    </div>
+
+    <!-- Step 5: Subject Analytics -->
+    <div class="section" id="section-5">
+      <div id="analytics-empty" class="card">
+        <div class="empty-state">
+          <div class="empty-state-icon" style="background:#f5f3ff;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="1.8"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg>
+          </div>
+          <h3>No analytics yet</h3>
+          <p>Enter marks and calculate results — subject insights and class statistics will appear here.</p>
+          <div class="empty-state-actions">
+            <button class="empty-cta-btn" onclick="goToStep(3)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>
+              Enter &amp; Calculate Marks
+            </button>
+            <button class="empty-cta-btn-ghost" onclick="goToStep(4)">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+              View Results
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="analytics-content" style="display:none;">
+        <!-- Action row — full-bleed on mobile (padding added via CSS) -->
+        <div class="analytics-action-row">
+          <button class="btn btn-success analytics-btn-export-img" onclick="exportAnalyticsImage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Export as Image
+          </button>
+          <button class="btn btn-primary analytics-btn-pdf" onclick="exportAnalyticsPDF()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Include in PDF Report
+          </button>
+          <button class="btn btn-ghost analytics-btn-back" onclick="goToStep(4)">← Back to Results</button>
+        </div>
+
+        <!-- Stats summary row -->
+        <div class="metrics-grid analytics-metrics-grid" id="analyticsMetricsGrid"></div>
+
+        <!-- Fail-rate alert banner -->
+        <div id="analyticsFailAlert" style="display:none;" class="analytics-fail-alert-wrap"></div>
+
+        <!-- Bar chart card -->
+        <div class="card analytics-chart-card" id="analyticsChartCard">
+          <div class="card-header analytics-chart-header">
+            <div class="analytics-chart-title-block">
+              <h3>Class Average per Subject</h3>
+              <p>Percentage score — bars in red indicate &gt;30% failed</p>
+            </div>
+            <label class="analytics-passline-toggle">
+              <input type="checkbox" id="analyticsShowPassLine" checked onchange="renderSubjectAnalytics()" style="accent-color:var(--primary);" />
+              <span>Show pass line</span>
+            </label>
+          </div>
+          <div class="card-body analytics-chart-body">
+            <div class="analytics-canvas-scroll" id="analyticsCanvasScroll">
+              <canvas id="analyticsChartCanvas" style="display:block;height:280px;"></canvas>
+            </div>
+            <!-- Scroll hint: only visible on mobile when chart overflows -->
+            <div class="analytics-scroll-hint" id="analyticsScrollHint" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              Scroll to see all subjects
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ Score Distribution Histogram (Feature 12) ══ -->
+        <div id="scoreDistCard" class="card analytics-new-card">
+          <div class="card-header" style="padding:14px 18px 10px;">
+            <div>
+              <h3 style="display:flex;align-items:center;gap:6px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" class="icon-primary-shrink"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                Score Distribution
+              </h3>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Histogram of how many students scored in each band — quickly see if a test was too hard or too easy</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
+              <select id="scoreDistSubjectSelect" onchange="renderScoreDist()"
+                style="appearance:none;-webkit-appearance:none;padding:6px 28px 6px 10px;border:1.5px solid var(--border);border-radius:9px;font-size:12px;font-family:inherit;color:var(--text);background:var(--bg);cursor:pointer;position:relative;">
+              </select>
+            </div>
+          </div>
+          <div class="card-body" style="padding:0 18px 16px;">
+            <div id="scoreDistContent" style="min-height:80px;"></div>
+          </div>
+        </div>
+
+        <!-- ══ Grade Distribution by Subject (Feature 13) ══ -->
+        <div id="gradeDistCard" class="card analytics-new-card">
+          <div class="card-header" style="padding:14px 18px 10px;">
+            <div>
+              <h3 style="display:flex;align-items:center;gap:6px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" class="icon-primary-shrink"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                Grade Distribution by Subject
+                <span id="gradeDistSyncBadge" style="display:none;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--primary);background:var(--primary-light,#eff6ff);border:1px solid #bfdbfe;border-radius:99px;padding:1px 7px;white-space:nowrap;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="9" height="9"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                  synced
+                </span>
+              </h3>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">How many students earned each grade for the selected subject</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
+              <select id="gradeDistSubjectSelect" onchange="(function(){var b=document.getElementById('gradeDistSyncBadge');if(b)b.style.display='none';renderGradeDist();})()"
+                style="appearance:none;-webkit-appearance:none;padding:6px 28px 6px 10px;border:1.5px solid var(--border);border-radius:9px;font-size:12px;font-family:inherit;color:var(--text);background:var(--bg);cursor:pointer;">
+              </select>
+              <div id="gradeSummaryBadge" style="font-size:11px;font-weight:600;white-space:nowrap;"></div>
+            </div>
+          </div>
+          <div class="card-body" style="padding:0 18px 16px;">
+            <div id="gradeDistBars" style="display:flex;flex-direction:column;gap:7px;min-height:60px;"></div>
+          </div>
+        </div>
+
+        <!-- Subject detail table -->
+        <div class="card analytics-table-card">
+
+        <!-- Subject Breakdown header -->
+          <div class="card-header">
+            <div>
+              <h3>Subject Breakdown</h3>
+              <p class="analytics-table-subtitle">Avg · Median · High · Low · Fail rate</p>
+            </div>
+            <!-- Mobile view toggle — hidden on desktop via CSS -->
+            <div class="anl-view-toggle" id="anlViewToggle">
+              <button class="active" id="anlBtnCards" onclick="anlSetView('cards')" title="Card view">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="2" y="3" width="8" height="8" rx="2"/><rect x="14" y="3" width="8" height="8" rx="2"/><rect x="2" y="14" width="8" height="8" rx="2"/><rect x="14" y="14" width="8" height="8" rx="2"/></svg>
+                Cards
+              </button>
+              <button id="anlBtnTable" onclick="anlSetView('table')" title="Table view">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M3 10h18M3 14h18M10 3v18M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6z"/></svg>
+                Table
+              </button>
+            </div>
+          </div>
+          <!-- Mobile card view -->
+          <div class="anl-mobile-cards-wrap" id="anlMobileCards">
+            <div class="anl-subject-cards" id="anlSubjectCards"></div>
+          </div>
+          <!-- Desktop / table view -->
+          <div class="analytics-table-scroll">
+            <table id="analyticsTable" class="analytics-detail-table"></table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════════════════════ -->
+
+<!-- CSV / Excel import -->
+<!-- ── CSV / Excel Import Modal ── -->
+<div class="share-modal-overlay" id="importModalOverlay" onclick="if(event.target===this)closeImportModal()">
+  <div class="share-modal" id="importModal" style="max-width:680px;">
+    <div class="share-modal-header">
+      <div>
+        <h3>Import Marks from CSV / Excel</h3>
+        <p>Upload a file — columns are auto-mapped to subjects, out-of-range values are flagged before import</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeImportModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+    <div class="share-modal-body" id="importModalBody">
+
+      <!-- Step A: Upload zone -->
+      <div id="imp-step-upload">
+        <div id="imp-drop-zone"
+          onclick="document.getElementById('imp-file-input').click()"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="event.preventDefault();this.classList.remove('drag-over');handleImportFileDrop(event)"
+          style="border:2.5px dashed var(--import-drop-border);border-radius:14px;padding:36px 20px;text-align:center;cursor:pointer;background:var(--import-drop-bg);transition:all 0.2s;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5" width="44" height="44" style="margin:0 auto 12px;display:block;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div style="font-size:14px;font-weight:700;color:var(--primary);margin-bottom:4px;">Drop your file here, or click to browse</div>
+          <div style="font-size:12px;color:var(--text-muted);">Supports CSV (.csv) and Excel (.xlsx / .xls)</div>
+          <input type="file" id="imp-file-input" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleImportFileSelect(event)" />
+        </div>
+
+        <div style="margin-top:16px;background:var(--import-tip-bg);border:1px solid var(--import-tip-border);border-radius:10px;padding:12px 14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--import-tip-title);margin-bottom:6px;display:flex;align-items:center;gap:5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="flex-shrink:0;"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>Expected file format</div>
+          <div style="font-size:12px;color:var(--import-tip-body);line-height:1.6;">
+            Your file should have one row per student. Columns can include <strong>Student Name</strong> (or Index No.), then one column per subject.
+            Column headers are matched to your subject names automatically — even fuzzy matches work!<br>
+            Partial uploads are supported: any subjects not in the file can be entered manually.
+          </div>
+          <button onclick="downloadImportTemplate()" class="btn btn-ghost btn-sm" style="margin-top:10px;border-color:var(--import-tip-border);color:var(--import-tip-title);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download template for current subjects
+          </button>
+        </div>
+      </div>
+
+      <!-- Step B: Column mapping -->
+      <div id="imp-step-mapping" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <div style="background:var(--import-map-bg);border:1px solid var(--import-map-border);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--import-map-fg);">
+            ✓ File loaded: <span id="imp-file-name-label"></span>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="resetImport()">Change file</button>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Column Mapping</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:10px;">
+          Auto-mapped columns are shown in green. Review and correct any mismatches before previewing.
+        </div>
+        <div id="imp-mapping-table" style="border:1px solid var(--border);border-radius:10px;overflow:hidden;"></div>
+        <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="resetImport()">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="runImportPreview()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Preview import
+          </button>
+        </div>
+      </div>
+
+      <!-- Step C: Preview & confirm -->
+      <div id="imp-step-preview" style="display:none;">
+        <div id="imp-preview-stats" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"></div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Preview — scroll to review</div>
+        <div id="imp-preview-table-wrap" style="overflow-x:auto;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;"></div>
+        <div id="imp-warnings" style="margin-top:10px;display:none;"></div>
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="imp-overwrite-chk" checked style="accent-color:var(--primary);" />
+            <label for="imp-overwrite-chk" style="font-size:13px;font-weight:600;cursor:pointer;">Overwrite existing marks</label>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" onclick="showImportStep('mapping')">← Back to mapping</button>
+            <button class="btn btn-success btn-sm" onclick="confirmImport()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M9 11l3 3L22 4"/></svg>
+              Confirm import
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Individual student report card -->
+<!-- ══ INDIVIDUAL STUDENT REPORT CARD MODAL ══ -->
+<div class="sc-modal-overlay" id="scModalOverlay" onclick="if(event.target===this)closeStudentCardModal()">
+  <div class="sc-modal" role="dialog" aria-modal="true" aria-labelledby="scModalTitle">
+
+    <div class="sc-modal-header">
+      <div>
+        <h3 id="scModalTitle">Student Report Card</h3>
+        <p>Individual PDF card — one page per student with branding, grade & subject bars</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeStudentCardModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="sc-modal-body">
+      <!-- Student selector -->
+      <div class="sc-selector">
+        <select id="scStudentSelect" onchange="renderStudentCard()">
+          <option value="">Select a student…</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="scNav(-1)" title="Previous student">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="scNav(1)" title="Next student">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- Live preview of the card -->
+      <div id="scCardPreview" class="sc-card-preview" style="display:none;">
+        <!-- JS-rendered -->
+      </div>
+
+      <div id="scEmptyState" style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" style="color:var(--border);margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Select a student above to preview their card
+      </div>
+
+      <!-- ZIP progress bar -->
+      <div id="scZipProgress" class="sc-zip-progress">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          <span id="scZipProgressText">Generating PDFs…</span>
+        </div>
+        <div style="background:rgba(26,86,219,0.15);border-radius:99px;height:6px;overflow:hidden;">
+          <div id="scZipProgressBar" style="height:100%;background:#1a56db;border-radius:99px;width:0%;transition:width 0.3s;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc-modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeStudentCardModal()">Close</button>
+      <button class="btn btn-ghost btn-sm" id="scDownloadOneBtn" onclick="exportOneStudentCard()" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export this card
+      </button>
+      <button class="btn btn-primary btn-sm" id="scDownloadAllBtn" onclick="exportAllStudentCards()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export all as ZIP
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- PDF/JPEG export libs (deferred — only needed when exporting) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+
+<!-- Share / Export modal -->
+<!-- ── Share / Export Modal ── -->
+<div class="share-modal-overlay" id="shareModalOverlay" onclick="if(event.target===this)closeShareModal()">
+  <div class="share-modal" id="shareModal">
+    <div class="share-modal-header">
+      <div>
+        <h3>Share / Export Results</h3>
+        <p>Choose a format to download or share</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeShareModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+    <div class="share-modal-body">
+      <!-- Format options -->
+      <div class="share-options">
+        <div class="share-option" id="opt-pdf" onclick="selectShareFormat('pdf')">
+          <div class="share-option-icon" style="background:#fef2f2;color:#dc2626;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h1c.6 0 1 .4 1 1v1c0 .6-.4 1-1 1H9v-3zm5 0h2m-2 3h2m-2-1.5H14"/></svg>
+          </div>
+          <div class="share-option-text">
+            <div class="share-option-title">PDF Document</div>
+            <div class="share-option-desc">Full result sheet, shareable & printable</div>
+          </div>
+          <div class="share-option-check" id="check-pdf"></div>
+        </div>
+        <div class="share-option" id="opt-jpeg" onclick="selectShareFormat('jpeg')">
+          <div class="share-option-icon" style="background:#eff6ff;color:#1a56db;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <div class="share-option-text">
+            <div class="share-option-title">JPEG Image</div>
+            <div class="share-option-desc">Single image, easy to share on WhatsApp</div>
+          </div>
+          <div class="share-option-check" id="check-jpeg"></div>
+        </div>
+      </div>
+
+      <!-- Include options -->
+      <div class="share-include-section">
+        <div class="share-include-label">Include in export</div>
+        <div class="share-include-row">
+          <label class="share-toggle"><input type="checkbox" id="inc-header" checked><span class="toggle-box"></span>Class header & info</label>
+          <label class="share-toggle"><input type="checkbox" id="inc-metrics" checked><span class="toggle-box"></span>Summary stats</label>
+          <label class="share-toggle"><input type="checkbox" id="inc-grading"><span class="toggle-box"></span>Grading scale</label>
+          <label class="share-toggle" title="Show grade badge (A+, B…) for each subject alongside the mark">
+            <input type="checkbox" id="inc-subj-grades">
+            <span class="toggle-box toggle-purple"></span>
+            Subject grades
+          </label>
+        </div>
+      </div>
+
+      <!-- Progress / preview area -->
+      <div id="shareProgress" style="display:none;">
+        <div class="share-progress-bar-wrap">
+          <div class="share-progress-bar" id="shareProgressBar"></div>
+        </div>
+        <p id="shareProgressText" style="font-size:13px;color:var(--text-muted);text-align:center;margin-top:8px;">Preparing…</p>
+      </div>
+
+      <div id="sharePreviewWrap" style="display:none;margin-top:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">Preview</div>
+        <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;max-height:260px;overflow-y:auto;">
+          <img id="sharePreviewImg" style="width:100%;display:block;" />
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="shareDownloadBtn" onclick="triggerShareDownload()" style="flex:1;justify-content:center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </button>
+          <button class="btn btn-ghost" id="shareNativeBtn" onclick="triggerNativeShare()" style="flex:1;justify-content:center;display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="share-modal-footer">
+      <button class="btn btn-primary" onclick="generateExport()" id="shareGenerateBtn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        Generate
+      </button>
+      <button class="btn btn-ghost" onclick="closeShareModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Exam manager -->
+<!-- ══ EXAM MANAGER MODAL — Redesigned ══ -->
+<div class="exam-modal-overlay" id="examModalOverlay" onclick="if(event.target===this)closeExamManager()">
+  <div class="exam-modal">
+
+    <!-- Header -->
+    <div class="exam-modal-header">
+      <div class="exam-modal-header-left">
+        <div class="exam-modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Exam Manager</h2>
+          <p>Switch exams &amp; terms — all data saved per exam</p>
+        </div>
+      </div>
+      <button class="exam-modal-close" onclick="closeExamManager()" title="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Body: filled by renderExamManager() -->
+    <div class="exam-modal-body" id="examModalBody"></div>
+
+    <!-- Footer -->
+    <div class="exam-modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="openCompareModal()" id="compareBtn" title="Compare results across exams">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+        Compare Terms
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="exportAllTermsExcel()" title="Download all exams as Excel file">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Export All
+      </button>
+      <div class="exam-modal-footer-right">
+        <button class="btn btn-primary btn-sm" onclick="addNewExam()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M12 5v14M5 12h14"/></svg>
+          New Exam
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- Compare terms -->
+<!-- ══ COMPARE TERMS MODAL ══ -->
+<div class="compare-modal-overlay" id="compareModalOverlay" onclick="if(event.target===this)closeCompareModal()">
+  <div class="compare-modal">
+    <div class="compare-modal-header">
+      <div>
+        <h2 style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" class="icon-primary-shrink"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/><path d="M7 15h2M13 15h4M13 12h4"/></svg>Term-over-Term Comparison</h2>
+        <p>Track student progress across all saved exams</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeCompareModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+    <div class="compare-modal-body" id="compareModalBody">
+      <!-- filled by renderCompare() -->
+    </div>
+    <div class="compare-modal-footer">
+      <button class="btn btn-success btn-sm" onclick="exportCompareExcel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Export Comparison
+      </button>
+      <span id="compareLegend" style="font-size:12px;color:var(--text-muted);margin-left:auto;">▲ Improved &nbsp; ▼ Declined &nbsp; — No change</span>
+      <button class="btn btn-ghost btn-sm" onclick="closeCompareModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Mobile numeric entry toolbar -->
+<!-- ══ Mobile Numeric Entry Toolbar ══ -->
+<div class="mobile-num-toolbar" id="mobileNumToolbar" role="toolbar" aria-label="Numeric entry toolbar">
+  <div class="mnt-student-label">
+    Student: <span id="mntStudentName">—</span>
+    <button onclick="hideMobileToolbar()" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;" aria-label="Close toolbar">✕</button>
+  </div>
+  <div class="mnt-subject-label">
+    <span id="mntSubjectName">Subject</span>
+    <span class="mnt-max" id="mntSubjectMax">/ —</span>
+  </div>
+  <div class="mnt-display">
+    <div class="mnt-display-val" id="mntDisplayVal">—</div>
+    <div class="mnt-display-hint" id="mntDisplayHint">Type a mark</div>
+  </div>
+  <div class="mnt-numpad">
+    <button class="mnt-btn" onclick="mntDigit('7')">7</button>
+    <button class="mnt-btn" onclick="mntDigit('8')">8</button>
+    <button class="mnt-btn" onclick="mntDigit('9')">9</button>
+    <button class="mnt-btn mnt-action" onclick="mntPrevStudent()">▲ Prev</button>
+
+    <button class="mnt-btn" onclick="mntDigit('4')">4</button>
+    <button class="mnt-btn" onclick="mntDigit('5')">5</button>
+    <button class="mnt-btn" onclick="mntDigit('6')">6</button>
+    <button class="mnt-btn mnt-action" onclick="mntNextStudent()">▼ Next</button>
+
+    <button class="mnt-btn" onclick="mntDigit('1')">1</button>
+    <button class="mnt-btn" onclick="mntDigit('2')">2</button>
+    <button class="mnt-btn" onclick="mntDigit('3')">3</button>
+    <button class="mnt-btn mnt-nav" onclick="mntPrevSubject()">◀</button>
+
+    <button class="mnt-btn mnt-clear" onclick="mntClear()">⌫</button>
+    <button class="mnt-btn" onclick="mntDigit('0')">0</button>
+    <button class="mnt-btn mnt-confirm" onclick="mntConfirm()">✓</button>
+    <button class="mnt-btn mnt-nav" onclick="mntNextSubject()">▶</button>
+  </div>
+  <div class="mnt-progress">
+    <span id="mntProgressLabel" style="white-space:nowrap;"></span>
+    <div class="mnt-progress-bar"><div class="mnt-progress-fill" id="mntProgressFill"></div></div>
+  </div>
+</div>
+
+<!-- Mobile undo FAB -->
+<!-- ══ Mobile Undo FAB ══ -->
+<button class="undo-fab" id="undoFab" onclick="performUndo()" disabled aria-label="Undo last action" title="Undo (tap to undo, long-press for history)">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+  <span class="undo-fab-count" id="undoFabCount">0</span>
+</button>
+
+
+<!-- Reset / Reload / Undo history dialogs -->
+<!-- ══ Reset All Confirmation Modal ══ -->
+<!-- ══════════════════════════════════════════════════
+     FOLDER CHANGE CONFIRM DIALOG
+     Shown when user clicks "Save to Device" while a
+     folder is already active — replaces browser confirm().
+══════════════════════════════════════════════════ -->
+<div class="fc-overlay" id="fcOverlay" onclick="if(event.target===this)closeFolderConfirm()">
+  <div class="fc-dialog-wrap">
+  <div class="fc-dialog" role="dialog" aria-modal="true" aria-labelledby="fcTitle">
+
+    <!-- Icon strip -->
+    <div class="fc-strip">
+      <div class="fc-icon">
+        <!-- Folder-switch icon: two folders with a swap arrow between them -->
+        <svg viewBox="0 0 56 56" width="64" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="fcBg" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#7c3aed"/>
+              <stop offset="100%" stop-color="#a855f7"/>
+            </linearGradient>
+            <linearGradient id="fcFolderA" x1="4" y1="14" x2="26" y2="36" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#e9d5ff" stop-opacity="0.85"/>
+            </linearGradient>
+            <linearGradient id="fcFolderB" x1="30" y1="20" x2="52" y2="42" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.75"/>
+              <stop offset="100%" stop-color="#ddd6fe" stop-opacity="0.60"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Rounded background pill -->
+          <rect width="56" height="56" rx="16" fill="url(#fcBg)"/>
+
+          <!-- Folder A (left, front) — tab + body -->
+          <path d="M6 22a2 2 0 012-2h5.5l1.8 2.2a1 1 0 00.78.38H21a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2V22z"
+            fill="url(#fcFolderA)"/>
+          <!-- Folder A tab -->
+          <path d="M6 22a2 2 0 012-2h5.5l1.8 2.2" stroke="white" stroke-width="0" fill="white" fill-opacity="0.4"/>
+
+          <!-- Folder B (right, slightly back) — tab + body -->
+          <path d="M33 27a2 2 0 012-2h5.5l1.8 2.2a1 1 0 00.78.38H48a2 2 0 012 2v8a2 2 0 01-2 2H35a2 2 0 01-2-2V27z"
+            fill="url(#fcFolderB)"/>
+
+          <!-- Swap arrow: right-pointing upper arm -->
+          <path d="M24 24.5 C27 22, 31 22, 33 24.5"
+            stroke="white" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.95"/>
+          <polyline points="31,22 33,24.5 30.5,26.5"
+            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95"/>
+
+          <!-- Swap arrow: left-pointing lower arm -->
+          <path d="M32 31.5 C29 34, 25 34, 23 31.5"
+            stroke="white" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.95"/>
+          <polyline points="25,34 23,31.5 25.5,29.5"
+            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95"/>
+        </svg>
+      </div>
+      <div class="fc-strip-title" id="fcTitle">Device Folder Active</div>
+    </div>
+
+    <!-- Body -->
+    <div class="fc-body">
+      <div class="fc-body-desc">
+        GradeFlow is currently saving to <strong id="fcFolderName" style="color:var(--text);">your device folder</strong>.<br>
+        What would you like to do?
+      </div>
+
+      <div class="fc-options">
+        <!-- Change folder -->
+        <button class="fc-option" id="fcChangeFolderBtn" onclick="fcChooseChange()">
+          <div class="fc-option-icon fc-option-icon--blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+              <line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>
+            </svg>
+          </div>
+          <div class="fc-option-text">
+            <div class="fc-option-label">Change Folder</div>
+            <div class="fc-option-sub">Pick a different folder on your device to save to</div>
+          </div>
+          <svg class="fc-option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+
+        <!-- Revert to browser -->
+        <button class="fc-option fc-option--danger" id="fcRevertBtn" onclick="fcChooseRevert()">
+          <div class="fc-option-icon fc-option-icon--red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <polyline points="1 4 1 10 7 10"/>
+              <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+            </svg>
+          </div>
+          <div class="fc-option-text">
+            <div class="fc-option-label">Revert to Browser Storage</div>
+            <div class="fc-option-sub">Stop saving to device — use browser memory only</div>
+          </div>
+          <svg class="fc-option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="fc-footer">
+      <button class="fc-cancel-btn" onclick="closeFolderConfirm()">Cancel — keep current folder</button>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<div class="reset-confirm-overlay" id="resetConfirmOverlay" onclick="if(event.target===this)closeResetConfirm()">
+  <div class="reset-confirm-dialog-wrap">
+  <div class="reset-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="rcTitle" aria-describedby="rcDesc">
+
+    <!-- Warning strip -->
+    <div class="reset-confirm-strip">
+      <div class="reset-confirm-icon">
+        <!-- Shield with exclamation — proper warning icon -->
+        <svg viewBox="0 0 24 24" fill="none" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+          <!-- Shield fill -->
+          <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6L12 2z" fill="#dc2626"/>
+          <!-- Shield inner highlight -->
+          <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6L12 2z" fill="url(#shieldGrad)"/>
+          <!-- Exclamation mark -->
+          <rect x="11" y="8" width="2" height="5" rx="1" fill="white"/>
+          <rect x="11" y="15" width="2" height="2" rx="1" fill="white"/>
+          <defs>
+            <linearGradient id="shieldGrad" x1="12" y1="2" x2="12" y2="23" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+              <stop offset="100%" stop-color="rgba(0,0,0,0.12)"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="reset-confirm-strip-title" id="rcTitle">Reset Everything?</div>
+    </div>
+
+    <!-- Body -->
+    <div class="reset-confirm-body" id="rcDesc">
+      <p>This will <strong>permanently delete</strong> all data in the current exam and cannot be undone.</p>
+      <ul class="reset-confirm-list">
+        <li>All students and index numbers</li>
+        <li>All subjects and marks</li>
+        <li>All results and analytics</li>
+        <li>Class setup information</li>
+      </ul>
+    </div>
+
+    <!-- Footer -->
+    <div class="reset-confirm-footer">
+      <button class="btn-rc-cancel" onclick="closeResetConfirm()" id="rcCancelBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Cancel
+      </button>
+      <button class="btn-rc-confirm" onclick="confirmResetAll()" id="rcConfirmBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        Yes, Reset All
+      </button>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<!-- ══ Reload / Leave Confirm Dialog ══ -->
+<div class="reload-confirm-overlay" id="reloadConfirmOverlay">
+  <div class="reload-confirm-dialog-wrap">
+  <div class="reload-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="rlTitle" aria-describedby="rlDesc">
+
+    <!-- Warning strip -->
+    <div class="reload-confirm-strip">
+      <div class="reload-confirm-icon">
+        <!-- Warning triangle icon — amber -->
+        <svg viewBox="0 0 24 24" fill="none" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="#d97706" opacity="0.2" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="11" y="9" width="2" height="6" rx="1" fill="#d97706"/>
+          <rect x="11" y="17" width="2" height="2" rx="1" fill="#d97706"/>
+        </svg>
+      </div>
+      <div class="reload-confirm-strip-title" id="rlTitle">Reload Page?</div>
+    </div>
+
+    <!-- Body -->
+    <div class="reload-confirm-body" id="rlDesc">
+      <p>You have <strong>unsaved changes</strong> that will be lost if you reload now.</p>
+      <ul class="reload-confirm-list">
+        <li>Unsaved marks and student data</li>
+        <li>Changes made since your last save</li>
+        <li>Current session progress</li>
+      </ul>
+    </div>
+
+    <!-- Footer -->
+    <div class="reload-confirm-footer">
+      <button class="btn-rl-cancel" id="rlCancelBtn" onclick="closeReloadConfirm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Cancel
+      </button>
+      <button class="btn-rl-save" id="rlSaveBtn" onclick="manualSave();closeReloadConfirm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save First
+      </button>
+      <button class="btn-rl-confirm" id="rlConfirmBtn" onclick="confirmReload()">
+        Reload Anyway
+      </button>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<!-- ══ Undo History Modal (mobile) ══ -->
+<div id="undoHistoryModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(9,14,30,0.6);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;padding:0;" onclick="if(event.target===this)closeUndoHistory()">
+  <div role="dialog" aria-modal="true" aria-labelledby="undoHistModalHeading" style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:70vh;flex-direction:column;animation:slideUpIn 0.22s ease;">
+    <div class="undo-hist-modal-header" style="padding:12px 18px 10px;background:var(--bg);border-bottom:1px solid var(--border);border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between;">
+      <div id="undoHistModalHeading" style="font-size:14px;font-weight:700;color:var(--text);">Undo History <span id="undoHistModalCount" style="font-size:12px;color:var(--text-muted);font-weight:500;"></span></div>
+      <button onclick="closeUndoHistory()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);line-height:1;padding:0 2px;">✕</button>
+    </div>
+    <div id="undoHistModalList" style="overflow-y:auto;flex:1;padding:6px 0;"></div>
+    <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;">
+      <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center;" onclick="closeUndoHistory()">Close</button>
+      <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center;" onclick="performUndo();closeUndoHistory()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+        Undo last
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ CLASS TEMPLATE IMPORT / EXPORT MODAL ══ -->
+<div class="ctpl-overlay" id="ctplOverlay" onclick="if(event.target===this)closeTemplateModal()">
+  <div class="ctpl-modal" role="dialog" aria-modal="true" aria-labelledby="ctplTitle">
+
+    <!-- Header -->
+    <div class="ctpl-header">
+      <div class="ctpl-header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6M9 15l3 3 3-3"/></svg>
+      </div>
+      <div class="ctpl-header-text">
+        <h3 id="ctplTitle">Class Template — Import &amp; Export</h3>
+        <p>Save your class setup as a reusable JSON, or load one to skip re-entry of students and subjects.</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeTemplateModal()" style="flex-shrink:0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="ctpl-body">
+
+      <!-- EXPORT PANEL -->
+      <div class="ctpl-panel">
+        <div class="ctpl-panel-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <strong>Export Class Template</strong>
+          <span id="ctplExportSummary">—</span>
+        </div>
+        <div class="ctpl-panel-body">
+          <div class="ctpl-summary" id="ctplExportChips"></div>
+          <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 12px;line-height:1.6;">Exports class info, students, and subjects — <em>no marks</em> — so you can load the same roster for a future exam.</p>
+          <button class="btn btn-primary btn-sm" onclick="exportClassTemplate()" style="width:100%;justify-content:center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download class_template.json
+          </button>
+        </div>
+      </div>
+
+      <div class="ctpl-or-divider">or import a saved template</div>
+
+      <!-- IMPORT PANEL -->
+      <div class="ctpl-panel">
+        <div class="ctpl-panel-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="15"/></svg>
+          <strong>Import Class Template</strong>
+        </div>
+        <div class="ctpl-panel-body" style="display:flex;flex-direction:column;gap:10px;">
+
+          <!-- Drop zone -->
+          <div class="ctpl-dropzone" id="ctplDropzone"
+            ondragover="event.preventDefault();this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="event.preventDefault();this.classList.remove('drag-over');ctplHandleDrop(event)">
+            <input type="file" id="ctplFileInput" accept=".json" onchange="ctplHandleFile(event)" />
+            <div class="ctpl-dropzone-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="15"/></svg>
+            </div>
+            <p><strong>Click to choose</strong> or drag &amp; drop a JSON file here</p>
+            <p style="font-size:11.5px;margin-top:4px;">Only .json files exported from this app are supported</p>
+          </div>
+
+          <!-- File loaded banner -->
+          <div class="ctpl-file-loaded" id="ctplFileBanner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="ctplFileNameLabel">—</span>
+            <button onclick="ctplClearFile()" title="Remove file">✕</button>
+          </div>
+
+          <!-- Validation results -->
+          <div class="ctpl-preview-info" id="ctplValidation"></div>
+
+          <!-- Import options -->
+          <div id="ctplImportOptions" style="display:none;">
+            <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:7px;">What would you like to do with marks?</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div class="ctpl-option-row selected" id="ctplOptFresh" onclick="ctplSelectOption('fresh')">
+                <div class="ctpl-option-dot"></div>
+                <div class="ctpl-option-label">
+                  <strong>Start fresh — import setup only</strong>
+                  <span>Students &amp; subjects loaded, all mark fields empty</span>
+                </div>
+              </div>
+              <div class="ctpl-option-row" id="ctplOptMarks" onclick="ctplSelectOption('marks')">
+                <div class="ctpl-option-dot"></div>
+                <div class="ctpl-option-label">
+                  <strong>Import marks too</strong>
+                  <span>Restore marks from file if they were included</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="ctpl-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeTemplateModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="ctplApplyBtn" onclick="ctplApplyImport()" disabled style="margin-left:auto;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>
+        Apply Template
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PDF Generation Progress Overlay ══ -->
+<div class="pdf-gen-overlay" id="pdfGenOverlay" role="dialog" aria-modal="true" aria-label="Generating PDF">
+  <div class="pdf-gen-card-wrap">
+  <div class="pdf-gen-card">
+
+    <!-- Animated spinner icon -->
+    <div class="pdf-gen-spinner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="28" height="28">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <path d="M12 18v-6M9 15l3 3 3-3"/>
+      </svg>
+    </div>
+
+    <div class="pdf-gen-title" id="pdfGenTitle">Generating PDF…</div>
+
+    <div class="pdf-gen-step" id="pdfGenStep">
+      Preparing report card for<br>
+      <span class="pdf-gen-name" id="pdfGenName">—</span>
+    </div>
+
+    <div class="pdf-gen-track">
+      <div class="pdf-gen-bar" id="pdfGenBar"></div>
+    </div>
+
+    <div class="pdf-gen-counts" id="pdfGenCounts">0 / 0</div>
+
+    <div class="pdf-gen-cancel-wrap">
+      <button class="pdf-gen-cancel-btn" id="pdfGenCancelBtn" onclick="_pdfGenCancel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Cancel
+      </button>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+
+<!-- Storage consent banner -->
+<!-- ══ Cookie / Storage Consent Banner ══ -->
+<div id="gfConsentBanner" role="dialog" aria-label="Storage consent" aria-live="polite">
+  <div class="gf-consent-inner">
+    <div class="gf-consent-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div class="gf-consent-body">
+      <div class="gf-consent-title">This app stores data on your device</div>
+      <div class="gf-consent-text">
+        GradeFlow uses <strong style="color:#e2e8f0;">local storage</strong> to save your session, marks, and preferences — nothing leaves your device. On Chrome/Edge you can optionally save to a <strong style="color:#e2e8f0;">device folder</strong> instead. No tracking or external cookies are used. See our <a href="#" onclick="openLegalModal('privacy');return false;">Privacy Policy</a> and <a href="#" onclick="openLegalModal('terms');return false;">Terms of Service</a>.
+      </div>
+    </div>
+    <div class="gf-consent-actions">
+      <button class="gf-btn-accept" onclick="gfConsentAccept()">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Got it
+      </button>
+      <button class="gf-btn-decline" onclick="gfConsentDecline()">Decline</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PASS MARK & GRADING PANEL — Keyboard + Mobile Navigation
+     ══════════════════════════════════════════════════════════ -->
+
+<!-- Fill-down context menu + fill-value overlay -->
+<!-- ══════════════════════════════════════════════════════════════
+     FILL-DOWN CONTEXT MENU (right-click / long-press)
+     ══════════════════════════════════════════════════════════════ -->
+<div id="fillContextMenu" role="menu" aria-label="Column actions">
+  <div class="fcm-header" id="fcmHeader">Subject</div>
+  <button class="fcm-item fcm-absent-cell" id="fcmCellAbsent" onclick="ctxToggleCellAbsent()" style="color:#dc2626;display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+    Mark this student absent
+  </button>
+  <div class="fcm-sep" id="fcmCellAbsentSep"></div>
+  <button class="fcm-item" id="fcmFillValue" onclick="ctxFillValue()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Fill column with value…
+  </button>
+  <button class="fcm-item" id="fcmFillAbsent" onclick="ctxFillAbsent()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+    Mark all absent in column
+  </button>
+  <button class="fcm-item" id="fcmCopyDown" onclick="ctxCopyDown()" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>
+    Copy mark down column
+  </button>
+  <div class="fcm-sep"></div>
+  <button class="fcm-item fcm-danger" id="fcmClearColumn" onclick="ctxClearColumn()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+    Clear entire column
+  </button>
+</div>
+
+<!-- Fill-value prompt overlay -->
+<div id="fillValueOverlay" class="fv-overlay" onclick="if(event.target===this)closeFillValuePrompt()">
+  <div class="fv-dialog" role="dialog" aria-labelledby="fvTitle">
+    <div class="fv-title" id="fvTitle">Fill column with value</div>
+    <div class="fv-subject" id="fvSubjectLabel"></div>
+    <input class="fv-input" id="fvInput" type="number" min="0" placeholder="Enter mark value" inputmode="numeric"
+      onkeydown="if(event.key==='Enter')confirmFillValue();if(event.key==='Escape')closeFillValuePrompt();" />
+    <div class="fv-hint" id="fvHint"></div>
+    <div class="fv-btns">
+      <button class="btn btn-ghost btn-sm" onclick="closeFillValuePrompt()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmFillValue()">Fill all students</button>
+    </div>
+  </div>
+</div>
+
+<!-- Keyboard shortcut cheat sheet -->
+<!-- ══════════════════════════════════════════════════════════════
+     KEYBOARD SHORTCUT CHEAT SHEET MODAL
+     ══════════════════════════════════════════════════════════════ -->
+<div id="shortcutModalOverlay" class="sc-overlay" onclick="if(event.target===this)closeShortcutModal()" aria-modal="true" role="dialog" aria-labelledby="scTitle">
+  <div class="sc-modal">
+    <div class="sc-header">
+      <div class="sc-title-row">
+        <!-- Icon swaps between keyboard (PC) and phone (mobile) via JS -->
+        <span id="scHeaderIcon" style="color:var(--primary);flex-shrink:0;display:flex;">
+          <!-- default: keyboard -->
+          <svg id="scIconPc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg>
+          <svg id="scIconMobile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+        </span>
+        <span id="scTitle">Help &amp; Tips</span>
+      </div>
+      <!-- Device toggle tabs — lets any user manually switch view -->
+      <div class="sc-device-tabs" id="scDeviceTabs">
+        <button class="sc-tab" id="scTabPc" onclick="scShowTab('pc')" title="PC / Desktop view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          PC
+        </button>
+        <button class="sc-tab" id="scTabMobile" onclick="scShowTab('mobile')" title="Mobile / Tablet view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+          Mobile
+        </button>
+      </div>
+      <button class="sc-close" onclick="closeShortcutModal()" aria-label="Close">×</button>
+    </div>
+
+    <!-- ══ PC / KEYBOARD CONTENT ══ -->
+    <div class="sc-body" id="scBodyPc">
+      <!-- Guide banner -->
+      <div class="sc-guide-banner" onclick="closeShortcutModal(); setTimeout(function(){ window.gftStartTour && window.gftStartTour(); }, 200);">
+        <div class="sc-guide-banner-left">
+          <div class="sc-guide-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <div class="sc-guide-banner-title">New to GradeFlow?</div>
+            <div class="sc-guide-banner-sub">Take the interactive Guide — learn the full workflow in 60 seconds.</div>
+          </div>
+        </div>
+        <div class="sc-guide-banner-cta">Start Guide →</div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Marks Table Navigation</div>
+        <div class="sc-grid">
+          <div class="sc-row"><span class="sc-keys"><kbd>Tab</kbd></span><span class="sc-desc">Move right to next cell</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Shift</kbd>+<kbd>Tab</kbd></span><span class="sc-desc">Move left to previous cell</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Enter</kbd></span><span class="sc-desc">Move down to next student</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd></span><span class="sc-desc">Navigate cells directionally</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd style="color:#dc2626;border-color:#fca5a5;">A</kbd></span><span class="sc-desc">Mark cell absent — or clear absent if already AB</span></div>
+          <div class="sc-row"><span class="sc-keys">AB cell focused</span><span class="sc-desc">Arrow keys navigate away · Enter/A clears absent</span></div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Fill &amp; Bulk Actions</div>
+        <div class="sc-grid">
+          <div class="sc-row"><span class="sc-keys"><kbd>Right-click</kbd> header or cell</span><span class="sc-desc">Open fill &amp; bulk-mark menu</span></div>
+          <div class="sc-row"><span class="sc-keys">Fill column</span><span class="sc-desc">Set same mark for all students</span></div>
+          <div class="sc-row"><span class="sc-keys">Copy mark down</span><span class="sc-desc">Repeat a cell's value downward</span></div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Pass Mark Panel</div>
+        <div class="sc-grid">
+          <div class="sc-row"><span class="sc-keys"><kbd>↑</kbd><kbd>↓</kbd></span><span class="sc-desc">Navigate between subjects</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>←</kbd><kbd>→</kbd></span><span class="sc-desc">Decrease / increase value by 1</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Enter</kbd></span><span class="sc-desc">Move to next subject</span></div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Grading Scale Panel</div>
+        <div class="sc-grid">
+          <div class="sc-row"><span class="sc-keys"><kbd>↑</kbd><kbd>↓</kbd></span><span class="sc-desc">Move between grade rows</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>←</kbd><kbd>→</kbd></span><span class="sc-desc">Decrease / increase percent by 1</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>+</kbd> / <kbd>−</kbd></span><span class="sc-desc">Nudge percent value up / down</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>→</kbd></span><span class="sc-desc">Jump from label to percent field</span></div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-section-title">Global</div>
+        <div class="sc-grid">
+          <div class="sc-row"><span class="sc-keys"><kbd>Ctrl</kbd>+<kbd>Z</kbd></span><span class="sc-desc">Undo last mark change</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Ctrl</kbd>+<kbd>E</kbd></span><span class="sc-desc">Open / close Exam Manager</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Shift</kbd>+<kbd>?</kbd></span><span class="sc-desc">Open this help reference</span></div>
+          <div class="sc-row"><span class="sc-keys"><kbd>Esc</kbd></span><span class="sc-desc">Close any open panel or dialog</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MOBILE / TOUCH CONTENT ══ -->
+    <div class="sc-body" id="scBodyMobile" style="display:none;">
+      <!-- Guide banner -->
+      <div class="sc-guide-banner" onclick="closeShortcutModal(); setTimeout(function(){ window.gftStartTour && window.gftStartTour(); }, 200);">
+        <div class="sc-guide-banner-left">
+          <div class="sc-guide-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <div class="sc-guide-banner-title">New to GradeFlow?</div>
+            <div class="sc-guide-banner-sub">Take the interactive Guide — learn the full workflow in 60 seconds.</div>
+          </div>
+        </div>
+        <div class="sc-guide-banner-cta">Start Guide →</div>
+      </div>
+      <div class="sc-mobile-banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z"/><path d="M12 8v4l3 3"/></svg>
+        Touch gestures &amp; tips for mobile and tablet
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Entering Marks</div>
+        <div class="sc-tip-cards">
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Tap a cell</div>
+              <div class="sc-tip-sub">Opens the number keypad to enter a mark</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Use Next / Done on keypad</div>
+              <div class="sc-tip-sub">Moves to the next cell automatically</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-amber">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Swipe the marks table</div>
+              <div class="sc-tip-sub">Scroll left / right to see all subjects</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Fill &amp; Bulk Actions</div>
+        <div class="sc-tip-cards">
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-violet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Long-press a cell</div>
+              <div class="sc-tip-sub">Opens the fill &amp; bulk-mark menu for that column</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Long-press a column header</div>
+              <div class="sc-tip-sub">Fill all students with the same mark at once</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Copy mark down</div>
+              <div class="sc-tip-sub">Fills remaining rows with the same value downward</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Managing Subjects</div>
+        <div class="sc-tip-cards">
+
+          <div class="sc-tip-card sc-tip-card--highlight">
+            <div class="sc-tip-icon" style="background:rgba(99,102,241,0.12);color:#6366f1;">
+              <!-- 6-dot drag handle icon -->
+              <svg viewBox="0 0 14 20" fill="currentColor" width="16" height="16">
+                <circle cx="4" cy="3"  r="2"/><circle cx="10" cy="3"  r="2"/>
+                <circle cx="4" cy="10" r="2"/><circle cx="10" cy="10" r="2"/>
+                <circle cx="4" cy="17" r="2"/><circle cx="10" cy="17" r="2"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Move a subject to another group</div>
+              <div class="sc-tip-sub">Hold and drag the <strong>⠿ grip icon</strong> on any subject tag, then drop it onto a different group row. The subject moves instantly and a confirmation toast appears.</div>
+            </div>
+          </div>
+
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(99,102,241,0.09);color:#818cf8;">
+              <!-- left-right arrows icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Reorder subjects within a group</div>
+              <div class="sc-tip-sub">Drag a subject left or right using the same grip icon to change its position inside its group. A blue caret line shows exactly where it will land — left half = before, right half = after.</div>
+            </div>
+          </div>
+
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-blue">
+              <!-- pencil icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Edit a subject name or max marks</div>
+              <div class="sc-tip-sub">Tap the <strong>pencil ✏️</strong> on any subject tag to open the inline editor. You can tap freely between the name field and the marks field — the editor stays open until you tap ✓ to save or ✕ to cancel.</div>
+            </div>
+          </div>
+
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-amber">
+              <!-- finger-tap icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <path d="M18 11V6a2 2 0 00-4 0v5"/><path d="M14 10V4a2 2 0 00-4 0v6"/><path d="M10 10.5V6a2 2 0 00-4 0v8"/><path d="M6 14a4 4 0 004 4h4a6 6 0 006-6v-1a2 2 0 00-4 0"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Tip: hold for a moment before dragging</div>
+              <div class="sc-tip-sub">On touch screens, press the grip dot slightly longer (~200 ms) before you start sliding — this prevents accidental drags while scrolling the page.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Navigation</div>
+        <div class="sc-tip-cards">
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-blue">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Bottom navigation bar</div>
+              <div class="sc-tip-sub">Switch between Setup, Students, Subjects, Marks, Results, Analytics</div>
+            </div>
+          </div>
+          <div class="sc-tip-card sc-tip-card--highlight">
+            <div class="sc-tip-icon" style="background:rgba(124,58,237,0.12);color:#7c3aed;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18">
+                <path d="M5 12h14"/>
+                <polyline points="10 7 5 12 10 17"/>
+                <polyline points="14 7 19 12 14 17"/>
+              </svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Swipe left / right to switch steps</div>
+              <div class="sc-tip-sub">Swipe anywhere on the screen to move between Setup → Students → Subjects → Marks → Results → Analytics. Works just like swiping between pages in an app.</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-amber">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">More button (bottom bar)</div>
+              <div class="sc-tip-sub">Access Save, Undo, Theme, Branding &amp; Reset</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Save status pill (top bar)</div>
+              <div class="sc-tip-sub">Tap the coloured dot to save your session instantly</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Results &amp; Export</div>
+        <div class="sc-tip-cards">
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon" style="background:rgba(220,38,38,0.1);color:#dc2626;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Export report cards</div>
+              <div class="sc-tip-sub">Go to Results tab → tap Export to download PDF or Excel</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-violet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Share results</div>
+              <div class="sc-tip-sub">Use your device's share sheet to send reports via WhatsApp, email, etc.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-section">
+        <div class="sc-section-title">Quick Tips</div>
+        <div class="sc-tip-cards">
+          <div class="sc-tip-card sc-tip-card--highlight">
+            <div class="sc-tip-icon" style="background:rgba(245,158,11,0.15);color:#d97706;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Add to home screen</div>
+              <div class="sc-tip-sub">Install GradeFlow as an app — tap Share → "Add to Home Screen" in your browser</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Auto-save is always on</div>
+              <div class="sc-tip-sub">Your data saves automatically. Tap the save pill anytime for a manual save.</div>
+            </div>
+          </div>
+          <div class="sc-tip-card">
+            <div class="sc-tip-icon tint-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+            </div>
+            <div>
+              <div class="sc-tip-label">Undo mistakes</div>
+              <div class="sc-tip-sub">Tap More → Undo to reverse the last mark change</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc-footer" id="scFooterPc">
+      <span class="sc-tip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Right-click any column header or mark cell for bulk fill &amp; copy options
+      </span>
+    </div>
+    <div class="sc-footer" id="scFooterMobile" style="display:none;">
+      <span class="sc-tip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Long-press any mark cell or column header for bulk fill &amp; copy options
+      </span>
+    </div>
+  </div>
+</div>
+
+
+<!-- Grading scale / pass mark / subject grades panels -->
+<!-- ══ Grading Scale / Pass Mark / Subject Grade panels (recovered) ══ -->
+
+<!-- Grading Scale Panel (slide-in drawer) -->
+<div class="grade-panel-overlay" id="gradePanelOverlay" onclick="if(event.target===this) closeGradePanel()">
+  <div class="grade-panel">
+    <div class="grade-panel-header">
+      <div>
+        <h3>⚙ Grading scale</h3>
+        <p>Edit grade labels, minimum percentages and colours</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeGradePanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+    <div class="grade-panel-body" id="gradePanelBody">
+      <!-- filled by renderGradePanel() -->
+    </div>
+    <div class="grade-panel-footer">
+      <button class="btn btn-primary" onclick="closeGradePanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M9 11l3 3L22 4"/></svg>
+        Save & close
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="resetGradeDefaults()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+        Reset defaults
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Mobile edit bottom-sheet (shared by both panels) -->
+<div class="pmn-edit-overlay" id="pmnEditOverlay">
+  <div class="pmn-edit-sheet">
+    <div class="pmn-sheet-handle"></div>
+    <div class="pmn-sheet-head">
+      <span class="pmn-sheet-title" id="pmnSheetTitle">Edit value</span>
+      <button class="pmn-sheet-close" onclick="pmnCloseSheet()">✕ Close</button>
+    </div>
+    <div class="pmn-sheet-body">
+      <div class="pmn-sheet-label" id="pmnSheetLabel">Minimum percentage (%)</div>
+      <input type="number" class="pmn-sheet-input" id="pmnSheetInput" min="0" max="100" />
+      <input type="range"  class="pmn-sheet-slider" id="pmnSheetSlider" min="0" max="100" />
+      <div class="pmn-slider-labels"><span>0%</span><span>50%</span><span>100%</span></div>
+    </div>
+    <div class="pmn-sheet-actions">
+      <button class="pmn-sheet-apply"  onclick="pmnApplySheet()">✓ Apply</button>
+      <button class="pmn-sheet-cancel" onclick="pmnCloseSheet()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Pass Mark Per Subject Panel ── -->
+<div class="passmark-panel-overlay" id="passmarkPanelOverlay" onclick="if(event.target===this) closePassMarkPanel()">
+  <div class="passmark-panel">
+    <div class="passmark-panel-header">
+      <div>
+        <h3>🎯 Pass Mark Settings</h3>
+        <p>Set a custom pass mark (%) for each subject. Leave blank to use the global pass mark.</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closePassMarkPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+    <div class="passmark-panel-body" id="passmarkPanelBody">
+      <!-- rendered by JS -->
+    </div>
+    <div class="passmark-panel-footer">
+      <button class="btn btn-primary" onclick="closePassMarkPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M9 11l3 3L22 4"/></svg>
+        Save & close
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="resetAllPassMarks()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+        Reset all to global
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Subject Grades Modal ── -->
+<div class="subjgrade-modal-overlay" id="subjGradeModalOverlay" onclick="if(event.target===this) closeSubjectGradesModal()">
+  <div class="subjgrade-modal">
+    <div class="subjgrade-modal-header">
+      <div>
+        <h3 style="display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-primary-shrink"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Subject-wise Grades</h3>
+        <p>Grades assigned per subject using grading scale &amp; subject pass marks</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeSubjectGradesModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+    <div class="subjgrade-modal-body" id="subjGradeModalBody">
+      <!-- rendered by JS -->
+    </div>
+    <div class="subjgrade-modal-footer">
+      <button class="btn btn-success btn-sm" onclick="downloadSubjectGradesExcel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Excel
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="exportSubjectGradesPDF()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h1c.6 0 1 .4 1 1v1c0 .6-.4 1-1 1H9v-3z"/></svg>
+        PDF
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="exportSubjectGradesJPEG()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        JPG
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="closeSubjectGradesModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Libraries for PDF/JPEG export -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     INTERACTION SYSTEMS
+════════════════════════════════════════════════════════════ -->
+
+<!-- Swipe edge-glow indicators (CSS: src/swipe.css, JS: src/swipe-gestures.js) -->
+<!-- Swipe edge glow elements -->
+<div class="swipe-edge-indicator left"  id="swipeEdgeLeft"></div>
+<div class="swipe-edge-indicator right" id="swipeEdgeRight"></div>
+<div class="swipe-hint" id="swipeHint">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+  Swipe to switch steps
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+</div>
+
+
+<!-- Guided tour overlay (CSS: src/tour.css, JS: src/tour.js) -->
+<!-- Tour overlay -->
+<div id="gft-overlay" role="dialog" aria-modal="true" aria-label="GradeFlow guided tour" style="display:none;">
+  <canvas id="gft-canvas"></canvas>
+
+  <!-- Tooltip card -->
+  <div id="gft-tooltip" role="document">
+    <!-- Step indicator dots -->
+    <div id="gft-dots" aria-hidden="true"></div>
+
+    <!-- Content -->
+    <div id="gft-step-label">Step 1 of 7</div>
+    <h3 id="gft-title"></h3>
+    <p id="gft-body"></p>
+
+    <!-- Actions -->
+    <div id="gft-actions">
+      <button id="gft-skip" aria-label="Skip tour">Skip tour</button>
+      <div id="gft-nav">
+        <button id="gft-prev" aria-label="Previous step" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button id="gft-next" aria-label="Next step">
+          Next
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow pointer -->
+  <div id="gft-arrow" aria-hidden="true"></div>
+</div>
+
+<!-- "Take a tour" floating button (shows after tour is skipped/done) -->
+<button id="gft-replay-btn" aria-label="Replay guided tour" title="Take a guided tour">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+  <span>Guide</span>
+</button>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     APP ENTRY POINT
+     src/app.js bootstraps the entire application:
+       → src/main.css    (all CSS modules, bundled by Vite)
+       → src/splash-screen.js  (splash IIFE)
+       → src/swipe-gestures.js (swipe IIFE)
+       → src/tour.js           (tour IIFE)
+       → src/subject-autocomplete.js
+       → src/modules/*.js      (all feature modules)
+════════════════════════════════════════════════════════════ -->
+<script type="module" src="src/app.js"></script>
+
+</body>
+</html>

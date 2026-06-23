@@ -1,0 +1,25 @@
+{
+  "name": "GradeFlow",
+  "short_name": "GradeFlow",
+  "description": "Smart grade & marks management for teachers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    { "src": "icons/icon_29.png",  "sizes": "29x29",   "type": "image/png" },
+    { "src": "icons/icon_40.png",  "sizes": "40x40",   "type": "image/png" },
+    { "src": "icons/icon_58.png",  "sizes": "58x58",   "type": "image/png" },
+    { "src": "icons/icon_60.png",  "sizes": "60x60",   "type": "image/png" },
+    { "src": "icons/icon_76.png",  "sizes": "76x76",   "type": "image/png" },
+    { "src": "icons/icon_80.png",  "sizes": "80x80",   "type": "image/png" },
+    { "src": "icons/icon_87.png",  "sizes": "87x87",   "type": "image/png" },
+    { "src": "icons/icon_120.png", "sizes": "120x120", "type": "image/png" },
+    { "src": "icons/icon_152.png", "sizes": "152x152", "type": "image/png" },
+    { "src": "icons/icon_167.png", "sizes": "167x167", "type": "image/png" },
+    { "src": "icons/icon_180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icons/icon_192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon_512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

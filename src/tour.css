@@ -1,0 +1,355 @@
+/* ── Tour overlay ── */
+#gft-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99000;
+  pointer-events: none; /* canvas is click-through except tooltip */
+}
+#gft-overlay.active { pointer-events: auto; }
+
+#gft-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  cursor: default;
+}
+
+/* ── Tooltip ── */
+#gft-tooltip {
+  position: absolute;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  background: var(--gft-bg, #ffffff);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.07),
+    0 4px 6px -1px rgba(0,0,0,0.08),
+    0 20px 50px -8px rgba(0,0,0,0.22);
+  padding: 20px 22px 18px;
+  pointer-events: auto;
+  transition: transform 0.32s cubic-bezier(0.34,1.20,0.64,1), opacity 0.22s ease;
+  will-change: transform, opacity;
+  z-index: 99002;
+}
+
+[data-theme="dark"] #gft-tooltip {
+  --gft-bg: #1e293b;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08),
+    0 4px 6px -1px rgba(0,0,0,0.4),
+    0 20px 50px -8px rgba(0,0,0,0.55);
+}
+
+/* Entering animation */
+#gft-tooltip.gft-entering {
+  animation: gftPop 0.38s cubic-bezier(0.34,1.20,0.64,1) both;
+}
+@keyframes gftPop {
+  from { opacity: 0; transform: scale(0.88) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Step label */
+#gft-step-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #3b82f6;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+[data-theme="dark"] #gft-step-label { color: #60a5fa; }
+
+/* Progress bar inside step label */
+#gft-step-label::after {
+  content: '';
+  display: block;
+  flex: 1;
+  height: 2px;
+  border-radius: 99px;
+  background: #e2e8f0;
+  overflow: hidden;
+  position: relative;
+}
+[data-theme="dark"] #gft-step-label::after { background: #334155; }
+
+/* Dot indicators */
+#gft-dots {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+.gft-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 99px;
+  background: #cbd5e1;
+  transition: all 0.25s ease;
+}
+[data-theme="dark"] .gft-dot { background: #334155; }
+.gft-dot.active {
+  width: 20px;
+  background: #3b82f6;
+}
+[data-theme="dark"] .gft-dot.active { background: #60a5fa; }
+.gft-dot.done {
+  background: #93c5fd;
+}
+[data-theme="dark"] .gft-dot.done { background: #1e40af; }
+
+/* Title */
+#gft-title {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+}
+[data-theme="dark"] #gft-title { color: #f1f5f9; }
+
+/* Body */
+#gft-body {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #475569;
+}
+[data-theme="dark"] #gft-body { color: #94a3b8; }
+
+/* Highlighted text inside body */
+#gft-body strong {
+  color: #1e40af;
+  font-weight: 600;
+}
+[data-theme="dark"] #gft-body strong { color: #93c5fd; }
+
+/* Actions row */
+#gft-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+#gft-skip {
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  padding: 6px 0;
+  cursor: pointer;
+  transition: color 0.15s;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+#gft-skip:hover { color: #64748b; }
+[data-theme="dark"] #gft-skip { color: #475569; }
+[data-theme="dark"] #gft-skip:hover { color: #64748b; }
+
+#gft-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#gft-prev {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+#gft-prev:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+#gft-prev:disabled { opacity: 0.35; cursor: not-allowed; }
+[data-theme="dark"] #gft-prev {
+  background: #1e293b;
+  border-color: #334155;
+  color: #64748b;
+}
+[data-theme="dark"] #gft-prev:hover:not(:disabled) {
+  background: #334155;
+  color: #94a3b8;
+}
+
+#gft-next {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: none;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+  box-shadow: 0 1px 3px rgba(37,99,235,0.4);
+}
+#gft-next:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  box-shadow: 0 2px 8px rgba(37,99,235,0.5);
+  transform: translateY(-1px);
+}
+#gft-next:active { transform: translateY(0); }
+
+/* Arrow pointer */
+#gft-arrow {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--gft-bg, #ffffff);
+  transform: rotate(45deg);
+  z-index: 99001;
+  transition: left 0.32s cubic-bezier(0.34,1.20,0.64,1),
+              top  0.32s cubic-bezier(0.34,1.20,0.64,1);
+  pointer-events: none;
+}
+[data-theme="dark"] #gft-arrow {
+  --gft-bg: #1e293b;
+}
+
+/* ── Replay / Guide button ── */
+#gft-replay-btn {
+  position: fixed;
+  bottom: 80px; /* above bottom nav */
+  right: 16px;
+  z-index: 9000;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 15px 10px 12px;
+  border-radius: 99px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #1e40af;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06);
+  transition: all 0.2s;
+  letter-spacing: 0.2px;
+}
+#gft-replay-btn:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.15);
+  transform: translateY(-1px);
+}
+[data-theme="dark"] #gft-replay-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #60a5fa;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+[data-theme="dark"] #gft-replay-btn:hover {
+  background: #1e3a5f;
+  border-color: #2d5a9e;
+}
+
+/* On mobile: Tour button lives in the More sheet — hide the floating FAB */
+@media (max-width: 767px) {
+  #gft-replay-btn {
+    display: none !important;
+  }
+}
+
+/* On desktop, Tour FAB is replaced by the header button — hide it */
+@media (min-width: 768px) {
+  #gft-replay-btn {
+    display: none !important;
+  }
+}
+
+/* ── Guide button in topbar (desktop only) ── */
+.topbar-tour-btn {
+  display: none; /* hidden on mobile — tour lives in More sheet there */
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 7px;
+  background: transparent;
+  border: 1px solid var(--border, #e2e8f0);
+  color: var(--text-muted, #64748b);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  letter-spacing: 0.1px;
+}
+.topbar-tour-btn:hover {
+  background: var(--primary-light, #eff6ff);
+  border-color: var(--primary, #2563eb);
+  color: var(--primary, #2563eb);
+}
+[data-theme="dark"] .topbar-tour-btn {
+  border-color: #334155;
+  color: #94a3b8;
+}
+[data-theme="dark"] .topbar-tour-btn:hover {
+  background: #1e3a5f;
+  border-color: #2d5a9e;
+  color: #60a5fa;
+}
+@media (min-width: 768px) {
+  .topbar-tour-btn { display: inline-flex; }
+}
+
+/* ── Exam label input wrapper — plain wrapper, no adornment ── */
+.exam-label-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.exam-label-input-wrap input {
+  flex: 1;
+}
+/* Dead code cleanup — inline Tour btn never used */
+.exam-label-tour-btn {
+  display: none !important;
+}
+
+/* ── Spotlight pulse ring ── */
+@keyframes gftRingPulse {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  100% { transform: scale(1.08); opacity: 0; }
+}
+
+/* ── Welcome card extra flair ── */
+.gft-welcome-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #059669;
+  background: #d1fae5;
+  border-radius: 99px;
+  padding: 3px 10px;
+  margin-bottom: 12px;
+}
+[data-theme="dark"] .gft-welcome-badge {
+  color: #34d399;
+  background: rgba(16,185,129,0.15);
+}

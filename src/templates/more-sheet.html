@@ -1,0 +1,155 @@
+<!-- ══ More Bottom Sheet (mobile) ══ -->
+<div class="more-sheet-overlay" id="moreSheetOverlay" onclick="if(event.target===this)closeMoreSheet()">
+  <div class="more-sheet" id="moreSheet">
+    <div class="more-sheet-handle"></div>
+    <div class="more-sheet-title">More Options</div>
+
+    <!-- Exam / Term Switcher -->
+    <div class="more-sheet-row" onclick="openExamManager();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" style="background:rgba(26,86,219,0.1);color:#1a56db;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Switch Exam / Term</div>
+          <div class="more-sheet-row-sub" id="msExamSub">Manage terms &amp; exams</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--text-muted);flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Dark Mode -->
+    <div class="more-sheet-row" onclick="toggleDarkMode(event);updateMoreSheetDmSwitch()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon">
+          <svg id="msDmIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label" id="msDmLabel">Dark Mode</div>
+          <div class="more-sheet-row-sub" id="msDmSub">Switch theme</div>
+        </div>
+      </div>
+      <div class="ms-dm-switch" id="msDmSwitch"></div>
+    </div>
+
+    <!-- Autosave -->
+    <div class="more-sheet-row" onclick="manualSave();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Save Session</div>
+          <div class="more-sheet-row-sub" id="msSaveTimestamp">Saves data to browser storage</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--text-muted);flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Save to Device -->
+    <div class="more-sheet-row" id="msSaveDeviceRow" onclick="handleSaveLocationClick();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" id="msSaveDeviceIcon" style="background:rgba(34,197,94,0.12);color:#16a34a;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Save to Device</div>
+          <div class="more-sheet-row-sub" id="msSaveDeviceSub">Choose folder or download backup</div>
+        </div>
+      </div>
+      <div id="msSaveDeviceDot" style="width:8px;height:8px;border-radius:50%;background:#6b7280;flex-shrink:0;"></div>
+    </div>
+
+    <!-- Undo — tap to undo last action, or use History button to open sheet -->
+    <div class="more-sheet-row" id="msUndoRow" style="padding-right:8px;">
+      <div class="more-sheet-row-left" onclick="performUndo();closeMoreSheet()" style="flex:1;min-width:0;">
+        <div class="more-sheet-row-icon slate" id="msUndoIcon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Undo Last Action</div>
+          <div class="more-sheet-row-sub" id="msUndoSub">No actions to undo</div>
+        </div>
+      </div>
+      <button class="ms-undo-history-btn" id="msUndoHistoryBtn" onclick="closeMoreSheet();openUndoHistory();" title="View full undo history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+        History
+      </button>
+    </div>
+
+    <!-- School Branding -->
+    <div class="more-sheet-row" onclick="goToStep(0);setTimeout(function(){openBrandingSetupCard();},80);closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" style="background:rgba(124,58,237,0.1);">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" style="color:#7c3aed;"><path d="M12 3L1 9l4 2.18V18h14v-6.82L23 9zm6 13H6v-5.4l6 3.27 6-3.27V16zm-6-5L3.78 9 12 4.82 20.22 9z"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">School Branding</div>
+          <div class="more-sheet-row-sub">Logo, colours &amp; report header</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--text-muted);flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Guided Tour -->
+    <div class="more-sheet-row" id="msTourRow" onclick="closeMoreSheet(); setTimeout(function(){ window.gftStartTour && window.gftStartTour(); }, 300);">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" style="background:rgba(37,99,235,0.1);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#2563eb;">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Take the Guide</div>
+          <div class="more-sheet-row-sub">Replay the guided walkthrough</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--text-muted);flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Send Feedback -->
+    <div class="more-sheet-row" onclick="openFeedbackModal();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" style="background:rgba(14,165,233,0.1);color:#0ea5e9;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Send Feedback</div>
+          <div class="more-sheet-row-sub">Anonymous — your identity is never collected</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--text-muted);flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Reset All -->
+    <div class="more-sheet-row" onclick="openResetConfirm();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Reset All</div>
+          <div class="more-sheet-row-sub">Clear all data and start over</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--text-muted);flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Legal links footer -->
+    <div class="more-sheet-legal">
+      <a href="#" onclick="openLegalModal('privacy');closeMoreSheet();return false;">Privacy Policy</a>
+      <span class="more-sheet-legal-dot">·</span>
+      <a href="#" onclick="openLegalModal('terms');closeMoreSheet();return false;">Terms of Service</a>
+      <span class="more-sheet-legal-dot">·</span>
+      <a href="#" onclick="openFeedbackModal();closeMoreSheet();return false;">Feedback</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ School Branding Panel ══ -->
+<!-- Branding overlay kept as hidden stub so existing JS refs don't break -->

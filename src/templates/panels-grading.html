@@ -1,0 +1,119 @@
+<!-- ══ Grading Scale / Pass Mark / Subject Grade panels (recovered) ══ -->
+
+<!-- Grading Scale Panel (slide-in drawer) -->
+<div class="grade-panel-overlay" id="gradePanelOverlay" onclick="if(event.target===this) closeGradePanel()">
+  <div class="grade-panel">
+    <div class="grade-panel-header">
+      <div>
+        <h3>⚙ Grading scale</h3>
+        <p>Edit grade labels, minimum percentages and colours</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeGradePanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+    <div class="grade-panel-body" id="gradePanelBody">
+      <!-- filled by renderGradePanel() -->
+    </div>
+    <div class="grade-panel-footer">
+      <button class="btn btn-primary" onclick="closeGradePanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M9 11l3 3L22 4"/></svg>
+        Save & close
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="resetGradeDefaults()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+        Reset defaults
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Mobile edit bottom-sheet (shared by both panels) -->
+<div class="pmn-edit-overlay" id="pmnEditOverlay">
+  <div class="pmn-edit-sheet">
+    <div class="pmn-sheet-handle"></div>
+    <div class="pmn-sheet-head">
+      <span class="pmn-sheet-title" id="pmnSheetTitle">Edit value</span>
+      <button class="pmn-sheet-close" onclick="pmnCloseSheet()">✕ Close</button>
+    </div>
+    <div class="pmn-sheet-body">
+      <div class="pmn-sheet-label" id="pmnSheetLabel">Minimum percentage (%)</div>
+      <input type="number" class="pmn-sheet-input" id="pmnSheetInput" min="0" max="100" />
+      <input type="range"  class="pmn-sheet-slider" id="pmnSheetSlider" min="0" max="100" />
+      <div class="pmn-slider-labels"><span>0%</span><span>50%</span><span>100%</span></div>
+    </div>
+    <div class="pmn-sheet-actions">
+      <button class="pmn-sheet-apply"  onclick="pmnApplySheet()">✓ Apply</button>
+      <button class="pmn-sheet-cancel" onclick="pmnCloseSheet()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Pass Mark Per Subject Panel ── -->
+<div class="passmark-panel-overlay" id="passmarkPanelOverlay" onclick="if(event.target===this) closePassMarkPanel()">
+  <div class="passmark-panel">
+    <div class="passmark-panel-header">
+      <div>
+        <h3>🎯 Pass Mark Settings</h3>
+        <p>Set a custom pass mark (%) for each subject. Leave blank to use the global pass mark.</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closePassMarkPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+    <div class="passmark-panel-body" id="passmarkPanelBody">
+      <!-- rendered by JS -->
+    </div>
+    <div class="passmark-panel-footer">
+      <button class="btn btn-primary" onclick="closePassMarkPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M9 11l3 3L22 4"/></svg>
+        Save & close
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="resetAllPassMarks()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+        Reset all to global
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Subject Grades Modal ── -->
+<div class="subjgrade-modal-overlay" id="subjGradeModalOverlay" onclick="if(event.target===this) closeSubjectGradesModal()">
+  <div class="subjgrade-modal">
+    <div class="subjgrade-modal-header">
+      <div>
+        <h3 style="display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="flex-shrink:0;color:var(--primary)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Subject-wise Grades</h3>
+        <p>Grades assigned per subject using grading scale &amp; subject pass marks</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeSubjectGradesModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+    <div class="subjgrade-modal-body" id="subjGradeModalBody">
+      <!-- rendered by JS -->
+    </div>
+    <div class="subjgrade-modal-footer">
+      <button class="btn btn-success btn-sm" onclick="downloadSubjectGradesExcel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Excel
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="exportSubjectGradesPDF()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h1c.6 0 1 .4 1 1v1c0 .6-.4 1-1 1H9v-3z"/></svg>
+        PDF
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="exportSubjectGradesJPEG()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        JPG
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="closeSubjectGradesModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Libraries for PDF/JPEG export -->
+

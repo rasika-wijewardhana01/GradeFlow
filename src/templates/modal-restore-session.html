@@ -1,0 +1,58 @@
+<!-- Restore Session Modal — Premium -->
+<div class="restore-modal-overlay" id="restoreModalOverlay">
+  <div class="restore-modal">
+    <div class="restore-modal-header">
+      <!-- Professional restore icon: clean history clock -->
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Full circle clock face -->
+          <circle cx="12" cy="12" r="9"/>
+          <!-- Clock hands: 12 o'clock to centre, then to 3 o'clock position -->
+          <polyline points="12 7 12 12 16 12"/>
+        </svg>
+      </div>
+      <h3>Restore previous session?</h3>
+      <p>An unsaved session was found from your last visit. Continue where you left off?</p>
+    </div>
+
+    <div class="restore-modal-body">
+      <div class="restore-session-meta" id="restoreSessionMeta">
+        <div class="restore-meta-item">
+          <div class="label">Saved at</div>
+          <div class="value" id="restoreSavedAt">—</div>
+        </div>
+        <div class="restore-meta-item">
+          <div class="label">Class</div>
+          <div class="value" id="restoreClassName">—</div>
+        </div>
+        <div class="restore-meta-item">
+          <div class="label">Students</div>
+          <div class="value" id="restoreStudentCount">—</div>
+        </div>
+        <div class="restore-meta-item">
+          <div class="label">Subjects</div>
+          <div class="value" id="restoreSubjectCount">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="restore-modal-footer">
+      <button class="btn btn-ghost" onclick="discardSession()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+        </svg>
+        Discard
+      </button>
+      <button class="btn btn-primary" onclick="restoreSession()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
+          <circle cx="12" cy="12" r="9"/>
+          <polyline points="12 7 12 12 16 12"/>
+        </svg>
+        Restore session
+      </button>
+    </div>
+  </div>
+</div>
+

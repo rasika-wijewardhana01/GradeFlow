@@ -1,0 +1,433 @@
+// ═══════════════════════════════════════════════════════════════
+//  src/modules/storage.js
+//  StorageEngine: IndexedDB primary + localStorage fallback.
+//  Self-contained IIFE — zero dependencies on app state.
+//  Lifted verbatim from app.js lines 2852–3274.
+// ═══════════════════════════════════════════════════════════════
+const StorageEngine = (function () {
+  'use strict';
+
+  // ════════════════════════════════════════════════════════════════════════
+  //  LAYER 1 — IndexedDB  (primary store for all app data)
+  //
+  //  Database : 'gradeflow_db'   version 2
+  //  Stores   :
+  //    'data'    — key/value for app data (session, exams, branding)
+  //    'handles' — FileSystemDirectoryHandle persistence (unchanged)
+  //
+  //  Why IndexedDB instead of localStorage?
+  //    • localStorage is limited to ~5 MB per origin.  A school with many
+  //      classes, exams, and branding assets can exceed this easily.
+  //    • IndexedDB can hold 50 MB–1 GB+ depending on the browser/OS.
+  //    • Reads/writes are async so they never block the UI thread.
+  //    • Structured objects are stored natively — no JSON.stringify overhead
+  //      for the engine itself (we still stringify at the call-site for
+  //      backwards compatibility with the rest of the app).
+  // ════════════════════════════════════════════════════════════════════════
+
+  const _IDB_NAME    = 'gradeflow_db';
+  const _IDB_VERSION = 2;           // bumped from 1 → adds 'data' store
+  const _DATA_STORE  = 'data';      // app data (session / exams / branding)
+  const _HDL_STORE   = 'handles';   // dir handle (pre-existing)
+
+  // Singleton DB connection — opened once, reused for every operation
+  let _dbPromise = null;
+
+  function _openDB() {
+    if (_dbPromise) return _dbPromise;
+    _dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(_IDB_NAME, _IDB_VERSION);
+
+      req.onupgradeneeded = function (e) {
+        const db      = e.target.result;
+        const oldVer  = e.oldVersion;
+
+        // 'handles' store — existed from version 1
+        if (!db.objectStoreNames.contains(_HDL_STORE)) {
+          db.createObjectStore(_HDL_STORE);
+        }
+        // 'data' store — new in version 2
+        if (!db.objectStoreNames.contains(_DATA_STORE)) {
+          db.createObjectStore(_DATA_STORE);
+          console.log('[StorageEngine] IndexedDB upgraded to v2 — data store created.');
+        }
+      };
+
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror   = e => {
+        console.warn('[StorageEngine] IndexedDB open failed:', e.target.error);
+        // Clear the cached promise so future calls can retry rather than
+        // returning the permanently-rejected promise.
+        _dbPromise = null;
+        reject(e.target.error);
+      };
+    });
+    return _dbPromise;
+  }
+
+  // ── Low-level IDB helpers ────────────────────────────────────────────────
+
+  async function _idbGet(store, key) {
+    const db = await _openDB();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction(store, 'readonly');
+      const req = tx.objectStore(store).get(key);
+      req.onsuccess = () => resolve(req.result ?? null);
+      req.onerror   = () => reject(req.error);
+    });
+  }
+
+  async function _idbSet(store, key, value) {
+    const db = await _openDB();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction(store, 'readwrite');
+      const req = tx.objectStore(store).put(value, key);
+      req.onsuccess = () => resolve();
+      req.onerror   = () => reject(req.error);
+    });
+  }
+
+  async function _idbDelete(store, key) {
+    const db = await _openDB();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction(store, 'readwrite');
+      const req = tx.objectStore(store).delete(key);
+      req.onsuccess = () => resolve();
+      req.onerror   = () => reject(req.error);
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  //  MIGRATION  — runs once, silently moves localStorage data → IndexedDB
+  //
+  //  The flag 'gf_idb_migrated_v2' is stored in localStorage (it is a
+  //  tiny string, not app data, so it is fine there).  Once set it never
+  //  runs again.  If IndexedDB is unavailable the migration is skipped
+  //  and localStorage continues to work as the fallback.
+  // ════════════════════════════════════════════════════════════════════════
+
+  const _MIGRATED_FLAG = 'gf_idb_migrated_v2';
+
+  // Keys that should be migrated from localStorage → IndexedDB
+  const _MIGRATE_KEYS = [
+    'schoolResultManager_session_v1',
+    'schoolResultManager_exams_v1',
+    'rsm_school_branding_v1',
+  ];
+
+  async function _migrateFromLocalStorage() {
+    // Already done
+    if (localStorage.getItem(_MIGRATED_FLAG)) return;
+
+    let anyMigrated = false;
+    for (const key of _MIGRATE_KEYS) {
+      let raw = null;
+      try { raw = localStorage.getItem(key); } catch (_) {}
+      if (raw === null) continue;
+
+      try {
+        // Store as raw string in IDB — call-sites already stringify/parse
+        await _idbSet(_DATA_STORE, key, raw);
+        anyMigrated = true;
+        console.log('[StorageEngine] Migrated key to IndexedDB:', key);
+      } catch (e) {
+        // If IDB write fails, abort whole migration so we retry next time
+        console.warn('[StorageEngine] Migration write failed for key:', key, e);
+        return;
+      }
+    }
+
+    // Mark complete — do NOT delete from localStorage yet so a hard-reload
+    // before the first IDB read still works.  We clean LS lazily on getItem.
+    try { localStorage.setItem(_MIGRATED_FLAG, '1'); } catch (_) {}
+
+    if (anyMigrated) {
+      console.log('[StorageEngine] Migration to IndexedDB complete.');
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  //  LAYER 2 — File System Access API  (optional, user-chosen folder)
+  //
+  //  Unchanged from the original implementation — the only difference is
+  //  that the directory handle is now stored in the same IDB database
+  //  (version-2 'handles' store) rather than a separate DB.
+  // ════════════════════════════════════════════════════════════════════════
+
+  let _dirHandle = null;
+
+  function _detectFSASupport() {
+    if (!('showDirectoryPicker' in window)) return false;
+    if (!window.isSecureContext) return false;
+    try {
+      if (window.self !== window.top) {
+        try { void window.top.location.origin; }
+        catch (_) { return false; }
+      }
+    } catch (_) { return false; }
+    return true;
+  }
+  let _supported = _detectFSASupport();
+
+  function _fname(key) {
+    return key.replace(/[^a-zA-Z0-9_\-]/g, '_') + '.json';
+  }
+
+  async function _fileSet(key, value) {
+    try {
+      const fh = await _dirHandle.getFileHandle(_fname(key), { create: true });
+      const w  = await fh.createWritable();
+      await w.write(value);
+      await w.close();
+    } catch (e) {
+      console.warn('[StorageEngine] fileSet failed, falling back:', e);
+      await _idbSet(_DATA_STORE, key, value);
+    }
+  }
+
+  async function _fileGet(key) {
+    try {
+      const fh   = await _dirHandle.getFileHandle(_fname(key));
+      const file = await fh.getFile();
+      return await file.text();
+    } catch (_) { return null; }
+  }
+
+  async function _fileRemove(key) {
+    try { await _dirHandle.removeEntry(_fname(key)); } catch (_) {}
+  }
+
+  async function _persistHandle(handle) {
+    try { await _idbSet(_HDL_STORE, 'dir', handle); }
+    catch (e) { console.warn('[StorageEngine] Could not persist handle:', e); }
+  }
+
+  async function _loadHandle() {
+    try { return await _idbGet(_HDL_STORE, 'dir') || null; }
+    catch (_) { return null; }
+  }
+
+  async function _clearHandle() {
+    try { await _idbDelete(_HDL_STORE, 'dir'); } catch (_) {}
+  }
+
+  async function _tryRestoreHandle() {
+    if (!_supported) return false;
+    const saved = await _loadHandle();
+    if (!saved) return false;
+    try {
+      const perm = await saved.queryPermission({ mode: 'readwrite' });
+      if (perm === 'granted') {
+        _dirHandle = saved;
+        _updateSaveLocationUI(true);
+        return true;
+      }
+      _dirHandle = saved;
+      _updateSaveLocationUI(false, true);
+      return false;
+    } catch (_) { return false; }
+  }
+
+  let _pickerOpen = false;
+  async function requestDirectory() {
+    if (!_supported) { _showUnsupportedNotice(); return false; }
+    if (_pickerOpen) return false;
+    _pickerOpen = true;
+    try {
+      const handle = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' });
+      _dirHandle = handle;
+      await _persistHandle(handle);
+      _updateSaveLocationUI(true);
+      _showFileSaveToast();
+      return true;
+    } catch (e) {
+      if (e.name === 'SecurityError') {
+        _supported = false;
+        console.warn('[StorageEngine] showDirectoryPicker blocked. Falling back to IndexedDB.', e);
+        _showUnsupportedNotice();
+      } else if (e.name === 'NotAllowedError') {
+        console.warn('[StorageEngine] showDirectoryPicker NotAllowedError.', e);
+      } else if (e.name !== 'AbortError') {
+        console.warn('[StorageEngine] Picker error:', e);
+      }
+      return false;
+    } finally { _pickerOpen = false; }
+  }
+
+  async function _reauthorize() {
+    if (!_dirHandle) return false;
+    try {
+      const perm = await _dirHandle.requestPermission({ mode: 'readwrite' });
+      if (perm === 'granted') { _updateSaveLocationUI(true); _showFileSaveToast(); return true; }
+    } catch (_) {}
+    return false;
+  }
+
+  function releaseDirectory() {
+    _dirHandle = null;
+    _clearHandle();
+    _updateSaveLocationUI(false);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  //  PUBLIC API
+  //
+  //  Priority chain for reads/writes:
+  //    1. File System folder  (if user chose one and permission is active)
+  //    2. IndexedDB           (default for all browsers)
+  //    3. localStorage        (emergency fallback if IDB is unavailable)
+  // ════════════════════════════════════════════════════════════════════════
+
+  async function setItem(key, value) {
+    // ── Tier 1: file system ──
+    if (_dirHandle) {
+      try {
+        const perm = await _dirHandle.queryPermission({ mode: 'readwrite' });
+        if (perm === 'granted') {
+          await _fileSet(key, value);
+          // Mirror to IDB so a reload without folder permission still works
+          try { await _idbSet(_DATA_STORE, key, value); } catch (_) {}
+          return;
+        }
+        _updateSaveLocationUI(false, true);
+      } catch (_) {}
+    }
+    // ── Tier 2: IndexedDB ──
+    try {
+      await _idbSet(_DATA_STORE, key, value);
+      return;
+    } catch (e) {
+      console.warn('[StorageEngine] IDB setItem failed, falling back to localStorage:', e);
+    }
+    // ── Tier 3: localStorage ──
+    try { localStorage.setItem(key, value); }
+    catch (e) { console.warn('[StorageEngine] localStorage.setItem failed:', e); }
+  }
+
+  async function getItem(key) {
+    // ── Tier 1: file system ──
+    if (_dirHandle) {
+      try {
+        const perm = await _dirHandle.queryPermission({ mode: 'readwrite' });
+        if (perm === 'granted') {
+          const v = await _fileGet(key);
+          if (v !== null) return v;
+          // File missing → check IDB (handles first-launch migration path)
+        }
+      } catch (_) {}
+    }
+    // ── Tier 2: IndexedDB ──
+    try {
+      const v = await _idbGet(_DATA_STORE, key);
+      if (v !== null) {
+        // Lazily remove from localStorage now that IDB has it
+        try { localStorage.removeItem(key); } catch (_) {}
+        return v;
+      }
+    } catch (e) {
+      console.warn('[StorageEngine] IDB getItem failed, falling back to localStorage:', e);
+    }
+    // ── Tier 3: localStorage ──
+    try { return localStorage.getItem(key); } catch (_) { return null; }
+  }
+
+  async function removeItem(key) {
+    if (_dirHandle) {
+      try {
+        const perm = await _dirHandle.queryPermission({ mode: 'readwrite' });
+        if (perm === 'granted') await _fileRemove(key);
+      } catch (_) {}
+    }
+    try { await _idbDelete(_DATA_STORE, key); } catch (_) {}
+    try { localStorage.removeItem(key); } catch (_) {}
+  }
+
+  function isFileBased() { return !!_dirHandle; }
+  function isSupported()  { return _supported;  }
+
+  // ── UI helpers (unchanged) ──────────────────────────────────────────────
+
+  function _updateSaveLocationUI(active, needsAuth) {
+    const btn   = document.getElementById('saveLocationBtn');
+    const label = document.getElementById('saveLocationLabel');
+    const dot   = document.getElementById('saveLocationDot');
+    const msDot  = document.getElementById('msSaveDeviceDot');
+    const msSub  = document.getElementById('msSaveDeviceSub');
+    const msIcon = document.getElementById('msSaveDeviceIcon');
+    // Overflow menu mirrors
+    const omiDot   = document.getElementById('overflowSaveLocationDot');
+    const omiLabel = document.getElementById('overflowSaveLocationLabel');
+
+    if (active) {
+      const folderName = _dirHandle ? _dirHandle.name : 'Device folder';
+      if (btn)   { btn.title = 'Saving to: ' + folderName + '\nClick to change'; btn.classList.add('file-active'); btn.classList.remove('needs-auth'); }
+      if (label) label.textContent = folderName;
+      if (dot)   dot.style.background = '#22c55e';
+      if (msDot)  msDot.style.background  = '#22c55e';
+      if (msSub)  msSub.textContent = '📁 ' + folderName;
+      if (msIcon) { msIcon.style.background = 'rgba(34,197,94,0.15)'; msIcon.style.color = '#16a34a'; }
+      if (omiDot)   { omiDot.classList.add('file-active'); omiDot.classList.remove('needs-auth'); }
+      if (omiLabel) omiLabel.textContent = folderName;
+      if (typeof window.gfHideSaveLocationBanner === 'function') window.gfHideSaveLocationBanner();
+    } else if (needsAuth) {
+      if (btn)   { btn.classList.remove('file-active'); btn.classList.add('needs-auth'); btn.title = 'Click to re-authorize folder access'; }
+      if (label) label.textContent = 'Re-authorize';
+      if (dot)   dot.style.background = '#f59e0b';
+      if (msDot)  msDot.style.background  = '#f59e0b';
+      if (msSub)  msSub.textContent = '⚠️ Re-authorize folder access';
+      if (msIcon) { msIcon.style.background = 'rgba(245,158,11,0.12)'; msIcon.style.color = '#d97706'; }
+      if (omiDot)   { omiDot.classList.remove('file-active'); omiDot.classList.add('needs-auth'); }
+      if (omiLabel) omiLabel.textContent = 'Re-authorize access';
+    } else {
+      if (btn)   { btn.classList.remove('file-active','needs-auth'); btn.title = 'Click to choose a save folder on your device'; }
+      if (label) label.textContent = 'Browser only';
+      if (dot)   dot.style.background = '#6b7280';
+      if (msDot)  msDot.style.background  = '#6b7280';
+      if (msSub)  msSub.textContent = 'Choose folder or download backup';
+      if (msIcon) { msIcon.style.background = 'rgba(34,197,94,0.12)'; msIcon.style.color = '#16a34a'; }
+      if (omiDot)   { omiDot.classList.remove('file-active','needs-auth'); }
+      if (omiLabel) omiLabel.textContent = 'Browser only';
+    }
+  }
+
+  function _showFileSaveToast() {
+    if (typeof toast === 'function') {
+      const name = _dirHandle ? _dirHandle.name : 'your device';
+      window.toast('💾 Saving to folder: ' + name, 'success');
+    }
+  }
+
+  function _showUnsupportedNotice() {
+    if (typeof openBackupModal === 'function') window.openBackupModal();
+  }
+
+  // ── Initialise on page load ──────────────────────────────────────────────
+  //  1. Run IDB migration (localStorage → IndexedDB) — once, silently
+  //  2. Restore previously granted folder handle
+  async function _init() {
+    try { await _migrateFromLocalStorage(); } catch (_) {}
+    try { await _tryRestoreHandle(); } catch (_) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _init);
+  } else {
+    setTimeout(_init, 0);
+  }
+
+  return {
+    setItem,
+    getItem,
+    removeItem,
+    isFileBased,
+    isSupported,
+    requestDirectory,
+    releaseDirectory,
+    reauthorize:   _reauthorize,
+    updateUI:      _updateSaveLocationUI,
+    _getDirHandle: function () { return _dirHandle; },
+  };
+})();
+
+// ── Expose on window so all modules can access StorageEngine ──
+window.StorageEngine = StorageEngine;

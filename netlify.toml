@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  netlify.toml  —  GradeFlow Netlify deployment configuration
+# ─────────────────────────────────────────────────────────────────────────────
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# ── SPA fallback ──────────────────────────────────────────────────────────────
+# GradeFlow is a single-page app. All unmatched paths must serve index.html
+# so the app shell loads and handles everything client-side. Status 200 (not
+# 301/302) so the browser URL stays unchanged and the SW registers at root scope.
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# ── HTTP caching headers ──────────────────────────────────────────────────────
+
+# index.html — never cache; browsers must always fetch the latest shell so
+# updated hashed bundles are discovered immediately.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Service worker — never cache. The browser compares the SW byte-for-byte on
+# every page load; stale HTTP cache here means users never see updates.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control    = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+# Web App Manifest — short cache; rarely changes but shouldn't be stale.
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+# Hashed JS/CSS bundles — immutable forever. Vite fingerprints every filename
+# so a new deploy always produces new URLs; old URLs are safe to cache forever.
+[[headers]]
+  for = "/src/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# App icons — cache for one week. Rarely change; safe to cache longer.
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
