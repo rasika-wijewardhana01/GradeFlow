@@ -2409,18 +2409,36 @@ function updateToggleSubjGradesBtn() {
 }
 
 // ── Init ──
-(function() {
+// Deferred to DOMContentLoaded so all window.* functions registered by other
+// modules (students.js, subjects.js, etc.) are available when this runs.
+// In the Vite production build, exam-manager is extracted into its own chunk
+// and that chunk is imported *before* the rest of main.js executes, so a
+// synchronous IIFE here would fire before renderStudentTags / renderSubjectTags
+// are placed on window — causing "window.renderStudentTags is not a function".
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function _emInit() {
+    window.renderStudentTags();
+    window.renderSubjectTags();
+    window.renderCategoryButtons();
+    window.renderSubjectCategoryPicker();
+    window.updateCategoryDatalist();
+
+    // ── Auto-save engine ──
+    window.initAutoSave();
+    // ── Exam Manager engine ──
+    initExamManagerBoostrap();
+  });
+} else {
+  // DOM already ready (e.g. script injected dynamically or dev-server HMR)
   window.renderStudentTags();
   window.renderSubjectTags();
   window.renderCategoryButtons();
   window.renderSubjectCategoryPicker();
   window.updateCategoryDatalist();
 
-  // ── Auto-save engine ──
   window.initAutoSave();
-  // ── Exam Manager engine ──
   initExamManagerBoostrap();
-})();
+}
 
 // ════════════════════════════════════════════
 //  CSV / EXCEL IMPORT ENGINE
