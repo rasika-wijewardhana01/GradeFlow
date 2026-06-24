@@ -19,7 +19,7 @@
 //     network.  Leaving the name unchanged = stale code survives deploys.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'gradeflow-v9'; // ← bumped from v8 — purges stale IDB-fix code
+const CACHE_NAME = 'gradeflow-v10'; // ← bumped from v9 — fixes sw.js promise error
 
 // Only list files whose paths are stable (not fingerprinted by Vite).
 // /style.css is intentionally absent — after the Vite build it becomes
@@ -62,12 +62,13 @@ self.addEventListener('fetch', e => {
   // Skip Vite dev-server internals (no-op in production, safety guard for dev)
   if (url.includes('/@vite/') || url.includes('/__vite') || url.includes('/node_modules/')) return;
 
-  // ── index.html — network-first ──────────────────────────────────────────
+  // ── Navigation requests (index.html) — network-first ───────────────────
   // Always try the network for the HTML shell so a fresh deploy is picked up
   // immediately.  Fall back to cache only when truly offline.
-  const isHtml = url.endsWith('/') || url.endsWith('/index.html') ||
-                 (!url.includes('.') && new URL(url).pathname.startsWith('/'));
-  if (isHtml) {
+  // e.request.mode === 'navigate' is the correct, reliable way to detect
+  // document-navigation requests (avoids false-positives from the old
+  // url.endsWith('/') heuristic that could match CDN URLs).
+  if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request)
         .then(resp => {
@@ -76,7 +77,13 @@ self.addEventListener('fetch', e => {
           }
           return resp;
         })
-        .catch(() => caches.match(e.request))
+        .catch(() =>
+          // caches.match resolves to undefined when cache is empty (e.g. right
+          // after a cache-name bump).  Always return a valid Response.
+          caches.match(e.request).then(
+            cached => cached || new Response('GradeFlow is offline', { status: 503 })
+          )
+        )
     );
     return;
   }
