@@ -12,9 +12,14 @@
 //      automatically by the fetch handler on first access.
 //    • CDN libraries are pre-cached so the app works fully offline after the
 //      first visit.
+//
+//  ⚠  CACHE_NAME must be bumped whenever code changes are deployed.
+//     The activate handler deletes every cache that does NOT match this name,
+//     forcing browsers to re-fetch index.html and all JS bundles from the
+//     network.  Leaving the name unchanged = stale code survives deploys.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'gradeflow-v8';
+const CACHE_NAME = 'gradeflow-v9'; // ← bumped from v8 — purges stale IDB-fix code
 
 // Only list files whose paths are stable (not fingerprinted by Vite).
 // /style.css is intentionally absent — after the Vite build it becomes
@@ -57,6 +62,26 @@ self.addEventListener('fetch', e => {
   // Skip Vite dev-server internals (no-op in production, safety guard for dev)
   if (url.includes('/@vite/') || url.includes('/__vite') || url.includes('/node_modules/')) return;
 
+  // ── index.html — network-first ──────────────────────────────────────────
+  // Always try the network for the HTML shell so a fresh deploy is picked up
+  // immediately.  Fall back to cache only when truly offline.
+  const isHtml = url.endsWith('/') || url.endsWith('/index.html') ||
+                 (!url.includes('.') && new URL(url).pathname.startsWith('/'));
+  if (isHtml) {
+    e.respondWith(
+      fetch(e.request)
+        .then(resp => {
+          if (resp.ok) {
+            caches.open(CACHE_NAME).then(c => c.put(e.request, resp.clone()));
+          }
+          return resp;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // ── All other assets — cache-first ──────────────────────────────────────
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
