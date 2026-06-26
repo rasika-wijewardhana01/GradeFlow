@@ -258,12 +258,6 @@ File System sync is an enhancement — the app works fully without it. JSON back
 
 ---
 
-## License
-
-This project is currently unlicensed (all rights reserved). A license will be added before public release.
-
----
-
 ## Author
 
 Built by **Rasika Wijewardhana** 
