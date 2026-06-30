@@ -81,61 +81,76 @@ function _decompress(b64) {
   return atob(b64);
 }
 
-/** Show a toast message (uses GradeFlow's existing toast system if available) */
+/** Show a toast message (uses GradeFlow's existing toast system) */
 function _toast(msg, type = 'info') {
-  if (window.showToast) { window.showToast(msg, type); return; }
+  if (typeof window.toast === 'function') { window.toast(msg, type); return; }
   console.log(`[Sync ${type}]`, msg);
 }
 
-/** Get the full app data snapshot from storage */
+/** Get the full app data snapshot from storage — matches GradeFlow's
+ *  actual backup bundle shape produced by backup.js's _collectBackupBundle():
+ *  { _gradeflow_backup, _version, _exported, _browser, session, exams, branding }
+ */
 async function _getBackupPayload() {
-  // Use GradeFlow's existing backup export mechanism
-  if (window.generateBackupData) {
-    return await window.generateBackupData();
+  // GradeFlow's StorageEngine + StorageEngine keys (see backup.js)
+  const sessionRaw  = await window.StorageEngine.getItem('schoolResultManager_session_v1');
+  const examsRaw    = await window.StorageEngine.getItem('schoolResultManager_exams_v1');
+  const brandingRaw = await window.StorageEngine.getItem('rsm_school_branding_v1');
+
+  // Prefer live in-memory state if available (matches backup.js behaviour)
+  let liveState = null;
+  if (typeof window.collectState === 'function') {
+    try { liveState = window.collectState(); } catch (_) { /* ignore */ }
   }
-  // Fallback: pull directly from StorageEngine
-  if (window.StorageEngine) {
-    const data = await window.StorageEngine.load();
-    return JSON.stringify({ version: 1, source: 'GradeFlow', data });
-  }
-  // Last resort: read from IndexedDB manually
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('GradeFlowDB');
-    req.onsuccess = e => {
-      const db = e.target.result;
-      const tx = db.transaction(db.objectStoreNames, 'readonly');
-      const result = {};
-      let pending = db.objectStoreNames.length;
-      if (pending === 0) return resolve(JSON.stringify({ version: 1, source: 'GradeFlow', data: {} }));
-      for (const name of db.objectStoreNames) {
-        const store = tx.objectStore(name);
-        const getAllReq = store.getAll();
-        getAllReq.onsuccess = ev => {
-          result[name] = ev.target.result;
-          if (--pending === 0) resolve(JSON.stringify({ version: 1, source: 'GradeFlow', data: result }));
-        };
-      }
-    };
-    req.onerror = () => reject(new Error('Cannot open IndexedDB'));
-  });
+
+  const bundle = {
+    _gradeflow_backup: true,
+    _version: 2,
+    _exported: new Date().toISOString(),
+    _browser: navigator.userAgent,
+    session:  liveState ? JSON.stringify(liveState) : (sessionRaw || null),
+    exams:    examsRaw    || null,
+    branding: brandingRaw || null,
+  };
+
+  return JSON.stringify(bundle);
 }
 
-/** Import received data into the app */
+/** Import received data into the app — mirrors backup.js's importBackupFile() restore logic */
 async function _importPayload(jsonStr) {
   try {
-    const payload = JSON.parse(jsonStr);
-    // Use GradeFlow's existing import mechanism
-    if (window.importBackupData) {
-      await window.importBackupData(payload.data ?? payload);
-      return true;
+    const bundle = JSON.parse(jsonStr);
+
+    if (!bundle._gradeflow_backup) {
+      throw new Error('Not a valid GradeFlow backup payload');
     }
-    if (window.StorageEngine) {
-      await window.StorageEngine.save(payload.data ?? payload);
-      return true;
+
+    if (bundle.session)  await window.StorageEngine.setItem('schoolResultManager_session_v1', bundle.session);
+    if (bundle.exams)    await window.StorageEngine.setItem('schoolResultManager_exams_v1',   bundle.exams);
+    if (bundle.branding) await window.StorageEngine.setItem('rsm_school_branding_v1',         bundle.branding);
+
+    // Re-apply session state to live UI without a full page reload
+    if (bundle.exams) {
+      try {
+        const ed = JSON.parse(bundle.exams);
+        if (ed && Array.isArray(ed.exams) && ed.exams.length && typeof window.initExamManager === 'function') {
+          await window.initExamManager();
+        }
+      } catch (_) { /* ignore parse errors, reload will still pick it up */ }
+    } else if (bundle.session) {
+      try {
+        const s = JSON.parse(bundle.session);
+        if (typeof window.applyState === 'function') window.applyState(s);
+      } catch (_) { /* ignore */ }
     }
-    return false;
+
+    if (bundle.branding && typeof window.loadBrandingFromStorage === 'function') {
+      await window.loadBrandingFromStorage();
+    }
+
+    return true;
   } catch (err) {
-    console.error('Import error:', err);
+    console.error('[Sync] Import error:', err);
     return false;
   }
 }
@@ -438,6 +453,12 @@ window.closeSyncModal = function () {
   const modal = _getSyncModal();
   if (modal) modal.style.display = 'none';
 };
+
+// Inline onclick="" attributes in index.html live in the global scope, not
+// this module's scope, so the view-switching helpers must be exposed too.
+window.syncSetView = _setView;
+window.syncStopCamera = _stopCamera;
+window.syncShowCodeSetup = function () { _setView('send-code-setup'); };
 
 // ── Send via QR ──
 

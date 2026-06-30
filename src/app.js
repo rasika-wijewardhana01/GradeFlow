@@ -8,6 +8,7 @@
 //  All inline <style> blocks have been moved to src/*.css files.
 // ─────────────────────────────────────────────────────────────
 import './main.css';
+import './styles/sync.css';
 
 // ── Splash screen & swipe (self-contained IIFEs, load early) ──
 import './splash-screen.js';
@@ -65,6 +66,7 @@ import './modules/context-menu.js';
 
 // ── Phase 4: Utilities & background services ──
 import './modules/backup.js';
+import './modules/sync.js';
 import './modules/reset.js';
 import './modules/consent.js';
 import './modules/shortcut-modal.js';
