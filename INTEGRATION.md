@@ -203,3 +203,4 @@ If your `netlify.toml` has a strict Content-Security-Policy, add these:
 - **QR auto-advance** — auto-show next QR after receiver confirms current chunk scanned
 - **Real-time sync** with a free Firebase/Supabase free tier if teachers need live collaboration
 - **Selective sync** — sync only specific exams rather than entire dataset
+- 
