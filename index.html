@@ -567,7 +567,7 @@
 
       <div class="sync-privacy-badge">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span>Your data never touches Anthropic or GradeFlow servers. Relay data is auto-deleted in 15 minutes.</span>
+        <span>Your data never touches GradeFlow servers permanently. Relay data is auto-deleted within 24 hours (or immediately after import).</span>
       </div>
 
       <div class="sync-role-cards">
@@ -628,9 +628,9 @@
       </div>
 
       <p class="sync-method-hint">
-        <strong>QR Code</strong> — fastest, works offline (same room). &nbsp;
-        <strong>Sync Code</strong> — works over the internet. &nbsp;
-        <strong>Backup File</strong> — universal fallback.
+        <strong>QR Code</strong> — same room, no internet needed. &nbsp;
+        <strong>Sync Code</strong> — close this device, open the other one within 24 hours. &nbsp;
+        <strong>Backup File</strong> — send via WhatsApp, email, or USB.
       </p>
     </div>
 
@@ -656,7 +656,7 @@
     <div data-sync-view="send-code-setup" class="sync-view" style="display:none;">
       <button class="sync-back-btn" onclick="syncSetView('home')">← Back</button>
       <h3 class="sync-view-title">Generate a Sync Code</h3>
-      <p class="sync-view-desc">Your data will be uploaded to a temporary secure relay. You'll get a 6-character code to enter on your other device. The data is auto-deleted after 15 minutes.</p>
+      <p class="sync-view-desc">Your data is uploaded to a secure temporary relay. You get a 6-character code — enter it on your other device <strong>any time within 24 hours</strong>. You don't need to keep this device open. Data is permanently deleted after import or after 24 hours.</p>
 
       <div class="sync-pin-section">
         <label class="sync-label" for="sync-pin-input">
@@ -685,10 +685,12 @@
         </button>
       </div>
 
-      <p id="sync-code-expiry" class="sync-code-expiry">Expires in 15 minutes</p>
-
-      <div class="sync-divider"></div>
-      <p class="sync-view-desc" style="font-size:0.8rem;opacity:0.6;">Once received, the data is deleted from the relay automatically.</p>
+      <p id="sync-code-expiry" class="sync-code-expiry">Expires in 24 hours</p>
+      <div class="sync-async-notice">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>You can <strong>close this device now</strong>. Open GradeFlow on your other device any time within 24 hours and enter this code.</span>
+      </div>
+      <p class="sync-view-desc" style="font-size:0.78rem;opacity:0.55;margin-top:10px;">Deleted from relay immediately after import, or automatically after 24h.</p>
     </div>
 
     <!-- ── VIEW: RECEIVE CODE ──────────────────────────────────────────────── -->
