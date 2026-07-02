@@ -53,3 +53,22 @@
   for = "/icons/*"
   [headers.values]
     Cache-Control = "public, max-age=604800"
+
+# ── Content Security Policy ───────────────────────────────────────────────────
+# Applied to all pages. Allows Firebase Firestore (sync relay), CDN scripts
+# (QRCode.js, jsQR, pako), and camera access (media-src) for QR scanning.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = """
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.gstatic.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com;
+      media-src 'self' blob: mediastream:;
+      img-src 'self' data: blob:;
+      worker-src 'self' blob:;
+      frame-src 'none';
+      object-src 'none';
+    """
