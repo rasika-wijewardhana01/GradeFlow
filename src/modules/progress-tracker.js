@@ -112,12 +112,33 @@ function _ptStudentExamResult(exam, studentName) {
 
 // ── Render the tracker ────────────────────────────────────────
 function _ptRender() {
-  const sel = document.getElementById('ptStudentSelect');
+  const sel  = document.getElementById('ptStudentSelect');
   const body = document.getElementById('ptBody');
   if (!sel || !body) return;
 
-  // Populate student dropdown (union of all students across all exams)
-  const allStudents = [...new Set((window._exams || []).flatMap(e => (e.students || []).map(s => s.name)))].sort();
+  // ── Collect students from ALL sources ──────────────────────
+  // Source 1: saved exam snapshots in window._exams
+  const fromExams = (window._exams || [])
+    .flatMap(e => (e.students || []).map(s => s.name));
+
+  // Source 2: current live session (may not yet be snapshotted into _exams)
+  // This covers the case where the teacher is mid-session and hasn't switched
+  // exams yet — window.students holds the live roster.
+  const fromLive = (window.students || []).map(s => s.name);
+
+  // Source 3: check if active exam in _exams already has students — if the
+  // live session differs, prefer live (it's always more current).
+  const allStudents = [...new Set([...fromExams, ...fromLive])].sort();
+
+  if (!allStudents.length) {
+    body.innerHTML = `<div class="pt-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <p>No students found. Add students to an exam first, then open the Progress Tracker.</p>
+    </div>`;
+    // Still populate an empty select
+    sel.innerHTML = '<option value="">No students found</option>';
+    return;
+  }
   const prev = sel.value;
   sel.innerHTML = '<option value="">Select a student…</option>' +
     allStudents.map(n => `<option value="${_ptEsc(n)}"${n === prev ? ' selected' : ''}>${_ptEsc(n)}</option>`).join('');
@@ -137,8 +158,33 @@ function _ptRender() {
     .map(e => ({ exam: e, result: _ptStudentExamResult(e, studentName) }))
     .filter(x => x.result !== null);
 
+  // Also include the current live session if it has this student and isn't
+  // already reflected in _exams (happens when teacher hasn't switched exams yet)
+  const liveHasStudent = (window.students || []).some(s => s.name === studentName);
+  const activeExamId   = window._activeExamId;
+  const activeInExams  = studentExams.some(x => x.exam.id === activeExamId);
+
+  if (liveHasStudent && !activeInExams && (window.subjects || []).length > 0) {
+    // Build a synthetic exam object from the live session
+    const examLabel = document.getElementById('examLabel')?.value?.trim() || 'Current Exam';
+    const className = document.getElementById('className')?.value?.trim()  || '';
+    const liveExam  = {
+      id:       activeExamId || '__live__',
+      name:     examLabel,
+      icon:     '📋',
+      meta:     { className },
+      students: window.students || [],
+      subjects: window.subjects || [],
+      marks:    window.marks    || {},
+      categories:   window.categories   || [],
+      gradingScale: window.gradingScale || [],
+    };
+    const liveResult = _ptStudentExamResult(liveExam, studentName);
+    if (liveResult) studentExams.push({ exam: liveExam, result: liveResult });
+  }
+
   if (!studentExams.length) {
-    body.innerHTML = `<div class="pt-empty"><p>No exam data found for <strong>${_ptEsc(studentName)}</strong>.</p></div>`;
+    body.innerHTML = `<div class="pt-empty"><p>No exam data found for <strong>${_ptEsc(studentName)}</strong>. Make sure you have entered marks.</p></div>`;
     return;
   }
 
