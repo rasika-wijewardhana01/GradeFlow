@@ -784,3 +784,33 @@ Object.defineProperty(window, '_mntVal', {
   set(v) { _mntVal = v; },
   configurable: true,
 });
+
+// ── Global keyboard shortcuts for new features ────────────────────────────────
+document.addEventListener('keydown', function (e) {
+  // Only fire when no modal is open and no input focused
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+  const ctrl = e.ctrlKey || e.metaKey;
+
+  // Ctrl+Shift+S → open Sync modal
+  if (ctrl && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+    e.preventDefault();
+    if (typeof window.openSyncModal === 'function') window.openSyncModal();
+    return;
+  }
+
+  // Ctrl+Shift+P → open Progress Tracker
+  if (ctrl && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+    e.preventDefault();
+    if (typeof window.openProgressTracker === 'function') window.openProgressTracker();
+    return;
+  }
+
+  // Ctrl+Shift+A → open Attendance Summary
+  if (ctrl && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+    e.preventDefault();
+    if (typeof window.openAttendanceModal === 'function') window.openAttendanceModal();
+    return;
+  }
+});

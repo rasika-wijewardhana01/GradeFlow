@@ -133,3 +133,56 @@
     setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 3500);
   }
 })();
+
+// ── Offline / Online indicator ────────────────────────────────────────────────
+(function () {
+  function _updateOfflineIndicator(isOnline) {
+    let dot = document.getElementById('gf-offline-dot');
+    if (!dot) {
+      dot = document.createElement('div');
+      dot.id = 'gf-offline-dot';
+      dot.title = 'Network status';
+      dot.style.cssText = [
+        'position:fixed', 'bottom:16px', 'left:16px', 'z-index:8000',
+        'display:flex', 'align-items:center', 'gap:6px',
+        'padding:5px 10px', 'border-radius:99px',
+        'font-size:11px', 'font-weight:600',
+        'border:1px solid transparent',
+        'transition:opacity 0.3s, transform 0.3s',
+        'pointer-events:none',
+        'backdrop-filter:blur(8px)',
+        '-webkit-backdrop-filter:blur(8px)'
+      ].join(';');
+      document.body.appendChild(dot);
+    }
+
+    if (isOnline) {
+      dot.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;box-shadow:0 0 0 2px rgba(34,197,94,0.25);"></span> Online';
+      dot.style.background = 'rgba(20,83,45,0.85)';
+      dot.style.borderColor = 'rgba(34,197,94,0.3)';
+      dot.style.color = '#86efac';
+      // Auto-hide after 3s when back online
+      clearTimeout(dot._hideTimer);
+      dot._hideTimer = setTimeout(() => { dot.style.opacity = '0'; dot.style.transform = 'translateY(4px)'; }, 3000);
+    } else {
+      clearTimeout(dot._hideTimer);
+      dot.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block;box-shadow:0 0 0 2px rgba(239,68,68,0.25);animation:gf-pulse 1.5s ease infinite;"></span> Offline — sync unavailable';
+      dot.style.background = 'rgba(69,10,10,0.88)';
+      dot.style.borderColor = 'rgba(239,68,68,0.35)';
+      dot.style.color = '#fca5a5';
+      dot.style.opacity = '1';
+      dot.style.transform = 'translateY(0)';
+    }
+  }
+
+  // Inject pulse keyframe once
+  const style = document.createElement('style');
+  style.textContent = '@keyframes gf-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }';
+  document.head.appendChild(style);
+
+  window.addEventListener('online',  () => { _updateOfflineIndicator(true);  if (typeof window.toast === 'function') window.toast('Back online', 'success'); });
+  window.addEventListener('offline', () => { _updateOfflineIndicator(false); if (typeof window.toast === 'function') window.toast('You are offline — sync codes require internet', 'warn'); });
+
+  // Show on load only if offline
+  if (!navigator.onLine) _updateOfflineIndicator(false);
+})();

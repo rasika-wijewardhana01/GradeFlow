@@ -505,6 +505,24 @@
       </span>
       <span>Sync Device</span>
     </div>
+    <div class="nav-item" onclick="openProgressTracker()" id="nav-progress" data-label="Progress Tracker" title="Student Progress Tracker">
+      <span class="nav-icon-wrap">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#22c55e;opacity:0.9;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </span>
+      <span>Progress Tracker</span>
+    </div>
+    <div class="nav-item" onclick="openAttendanceModal()" id="nav-attendance" data-label="Attendance" title="Attendance Summary">
+      <span class="nav-icon-wrap">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#ef4444;opacity:0.9;"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </span>
+      <span>Attendance</span>
+    </div>
+    <div class="nav-item" onclick="openBroadcastModal()" id="nav-broadcast" data-label="Share Results" title="Share Class Results via WhatsApp">
+      <span class="nav-icon-wrap">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor" style="color:#25d366;opacity:0.9;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.11 1.526 5.836L.057 23.453a.75.75 0 00.907.982l5.803-1.519A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.868 0-3.62-.487-5.14-1.34l-.367-.215-3.815.999 1.02-3.717-.235-.381A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      </span>
+      <span>Share Results</span>
+    </div>
   </nav>
   <div class="sidebar-footer" id="sidebarFooter">
     <div class="dark-mode-toggle" id="darkModeToggle" onclick="toggleDarkMode(event)" title="Toggle dark mode">
@@ -789,6 +807,139 @@
 </div>
 
 
+<!-- ══ Student Progress Tracker Modal ══ -->
+<div class="compare-modal-overlay" id="progressTrackerOverlay" onclick="if(event.target===this)closeProgressTracker()">
+  <div class="compare-modal" style="max-width:800px;">
+    <div class="compare-modal-header">
+      <div>
+        <h3>📈 Student Progress Tracker</h3>
+        <p>Track a student's performance across all terms</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeProgressTracker()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);">
+      <select id="ptStudentSelect" onchange="ptRender()" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;">
+        <option value="">Select a student…</option>
+      </select>
+    </div>
+    <div id="ptBody" class="compare-modal-body" style="max-height:65vh;overflow-y:auto;padding:16px 20px;"></div>
+  </div>
+</div>
+
+<!-- ══ Attendance Summary Modal ══ -->
+<div class="compare-modal-overlay" id="attendanceModalOverlay" onclick="if(event.target===this)closeAttendanceModal()">
+  <div class="compare-modal" style="max-width:700px;">
+    <div class="compare-modal-header">
+      <div>
+        <h3>📋 Attendance Summary</h3>
+        <p>Absent (AB) records across all exams</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeAttendanceModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="atBody" class="compare-modal-body" style="max-height:70vh;overflow-y:auto;padding:16px 20px;"></div>
+  </div>
+</div>
+
+<!-- ══ Class Broadcast Modal ══ -->
+<div class="compare-modal-overlay" id="broadcastModalOverlay" onclick="if(event.target===this)closeBroadcastModal()">
+  <div class="compare-modal" style="max-width:540px;">
+    <div class="compare-modal-header">
+      <div>
+        <h3>📢 Share Class Results</h3>
+        <p>Ready-to-send summary for WhatsApp</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeBroadcastModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="padding:16px 20px;">
+      <pre id="cbPreviewText" style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.6;background:var(--bg-subtle,rgba(0,0,0,0.03));border:1px solid var(--border);border-radius:10px;padding:14px 16px;color:var(--text);max-height:52vh;overflow-y:auto;"></pre>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="cbShareWhatsApp()" style="flex:1;justify-content:center;gap:6px;display:flex;align-items:center;">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.11 1.526 5.836L.057 23.453a.75.75 0 00.907.982l5.803-1.519A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.868 0-3.62-.487-5.14-1.34l-.367-.215-3.815.999 1.02-3.717-.235-.381A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          Open in WhatsApp
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="cbCopyText()" style="display:flex;align-items:center;gap:6px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OCR Mark Import Modal ══ -->
+<div class="compare-modal-overlay" id="ocrModalOverlay" onclick="if(event.target===this)closeOcrModal()">
+  <div class="compare-modal" style="max-width:640px;">
+    <div class="compare-modal-header">
+      <div>
+        <h3>📷 OCR Mark Import</h3>
+        <p>Photograph a mark sheet — AI reads and fills the marks</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeOcrModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="padding:16px 20px;min-height:200px;">
+
+      <!-- Upload view -->
+      <div id="ocr-view-upload">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Take a photo of your physical mark sheet or upload an image — AI will read the marks and fill them in automatically.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="ocrOpenCamera()" style="display:flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Open Camera
+          </button>
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Image
+            <input type="file" accept="image/*" style="display:none;" onchange="ocrHandleFile(event)">
+          </label>
+        </div>
+      </div>
+
+      <!-- Preview / camera view -->
+      <div id="ocr-view-preview" style="display:none;">
+        <video id="ocrVideo" style="width:100%;border-radius:10px;background:#000;max-height:300px;object-fit:cover;" autoplay muted playsinline></video>
+        <canvas id="ocrCanvas" style="display:none;"></canvas>
+        <img id="ocrPreviewImg" style="display:none;width:100%;border-radius:10px;max-height:300px;object-fit:contain;border:1px solid var(--border);" alt="Mark sheet preview"/>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+          <button id="ocrCaptureBtn" class="btn btn-primary btn-sm" onclick="ocrCapture()" style="display:flex;align-items:center;gap:6px;">📸 Capture</button>
+          <button id="ocrConfirmBtn" class="btn btn-primary btn-sm" onclick="ocrProcess()" style="display:none;display:flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Read Marks with AI
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="_ocrReset()">↩ Retake</button>
+        </div>
+      </div>
+
+      <!-- Processing view -->
+      <div id="ocr-view-processing" style="display:none;text-align:center;padding:40px 20px;">
+        <div style="width:44px;height:44px;border:3px solid rgba(26,86,219,0.2);border-top-color:#1a56db;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 14px;"></div>
+        <p id="ocrStatusMsg" style="color:var(--text-muted);font-size:14px;">Reading mark sheet…</p>
+      </div>
+
+      <!-- Review view -->
+      <div id="ocr-view-review" style="display:none;">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Review the detected marks below. Edit any incorrect values, then click Apply.</p>
+        <div id="ocrReviewTable" style="max-height:50vh;overflow:auto;"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="ocrApplyMarks()" style="display:flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>
+            Apply Marks
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="_ocrReset()">↩ Try Again</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- Bottom navigation (mobile) -->
 <!-- Bottom navigation (mobile only) -->
 <nav class="bottom-nav" id="bottomNav">
@@ -949,6 +1100,48 @@
         <div>
           <div class="more-sheet-row-label">Sync to Another Device</div>
           <div class="more-sheet-row-sub">QR code, sync code, or backup file</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-muted-shrink"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Student Progress Tracker -->
+    <div class="more-sheet-row" onclick="openProgressTracker();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" style="background:rgba(34,197,94,0.12);color:#16a34a;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Student Progress Tracker</div>
+          <div class="more-sheet-row-sub">Track any student across all terms</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-muted-shrink"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Attendance Summary -->
+    <div class="more-sheet-row" onclick="openAttendanceModal();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" style="background:rgba(239,68,68,0.12);color:#dc2626;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Attendance Summary</div>
+          <div class="more-sheet-row-sub">View AB records across all exams</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-muted-shrink"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Class Broadcast -->
+    <div class="more-sheet-row" onclick="openBroadcastModal();closeMoreSheet()">
+      <div class="more-sheet-row-left">
+        <div class="more-sheet-row-icon" style="background:rgba(37,211,102,0.12);color:#25d366;">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.11 1.526 5.836L.057 23.453a.75.75 0 00.907.982l5.803-1.519A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.868 0-3.62-.487-5.14-1.34l-.367-.215-3.815.999 1.02-3.717-.235-.381A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        </div>
+        <div>
+          <div class="more-sheet-row-label">Share Class Results</div>
+          <div class="more-sheet-row-sub">Send summary to WhatsApp group</div>
         </div>
       </div>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="icon-muted-shrink"><path d="M9 18l6-6-6-6"/></svg>
@@ -1687,6 +1880,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <span class="marks-toolbar-btn-text">Import CSV/Excel</span>
             </button>
+            <button class="btn btn-info-tint btn-sm" onclick="openOcrModal()" title="Photo a mark sheet — AI reads marks automatically">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <span class="marks-toolbar-btn-text">OCR Import</span>
+            </button>
             <button class="btn btn-ghost btn-sm" onclick="fillSampleData()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               <span class="marks-toolbar-btn-text">Sample</span>
@@ -2142,6 +2339,10 @@
 
     <div class="sc-modal-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeStudentCardModal()">Close</button>
+      <button class="btn btn-ghost btn-sm" id="scShareWABtn" onclick="scShareWhatsApp()" disabled title="Share this student's result via WhatsApp">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" style="color:#25d366;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.11 1.526 5.836L.057 23.453a.75.75 0 00.907.982l5.803-1.519A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.868 0-3.62-.487-5.14-1.34l-.367-.215-3.815.999 1.02-3.717-.235-.381A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        WhatsApp
+      </button>
       <button class="btn btn-ghost btn-sm" id="scDownloadOneBtn" onclick="exportOneStudentCard()" disabled>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Export this card
