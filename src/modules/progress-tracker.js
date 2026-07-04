@@ -497,7 +497,6 @@ window.ptToggleSubject = function (btn, subject) {
   // Re-render the full tracker to refresh both toggles + chart
   _ptRender();
 };
-}
 
 // ── Build text summary for a student ──────────────────────────
 function _ptBuildSummaryText(studentName) {
