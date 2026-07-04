@@ -228,6 +228,19 @@ function _ptRender() {
       <div class="pt-trend-wrap">${trendHtml} ${_sparkline(pcts)}</div>
     </div>
     ${statCards}
+
+    <!-- ── Line Chart ── -->
+    <div class="pt-chart-section">
+      <div class="pt-chart-header">
+        <span class="pt-chart-title">Subject Performance Across Exams</span>
+        <div class="pt-chart-toggles" id="ptChartToggles"></div>
+      </div>
+      <div class="pt-chart-wrap">
+        <canvas id="ptLineChart"></canvas>
+      </div>
+      <div class="pt-chart-legend" id="ptChartLegend"></div>
+    </div>
+
     <div class="pt-table-wrap">
       <table class="pt-table">
         <thead>
@@ -252,6 +265,238 @@ function _ptRender() {
         Copy summary
       </button>
     </div>`;
+
+  // Draw the line chart after DOM is ready
+  requestAnimationFrame(() => _ptDrawLineChart(studentExams, allSubjects));
+}
+
+// ── Colour palette for subject lines ─────────────────────────
+const _PT_COLORS = [
+  '#3b82f6','#22c55e','#f59e0b','#ef4444','#a855f7',
+  '#06b6d4','#f97316','#ec4899','#14b8a6','#84cc16',
+];
+
+// Subjects hidden by toggle — persists within a session
+let _ptHiddenSubjects = new Set();
+
+// ── Draw the line chart ───────────────────────────────────────
+function _ptDrawLineChart(studentExams, allSubjects) {
+  const canvas = document.getElementById('ptLineChart');
+  const toggleWrap = document.getElementById('ptChartToggles');
+  const legendWrap = document.getElementById('ptChartLegend');
+  if (!canvas || !studentExams.length || !allSubjects.length) return;
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const isMobile = window.innerWidth <= 600;
+  const examLabels = studentExams.map(x => x.exam.name);
+
+  // ── Colour map ────────────────────────────────────────────
+  const colorMap = {};
+  allSubjects.forEach((s, i) => { colorMap[s] = _PT_COLORS[i % _PT_COLORS.length]; });
+
+  // ── Build toggle buttons ──────────────────────────────────
+  if (toggleWrap) {
+    toggleWrap.innerHTML = allSubjects.map(sub => {
+      const color = colorMap[sub];
+      const hidden = _ptHiddenSubjects.has(sub);
+      return `<button class="pt-toggle-btn${hidden ? ' pt-toggle-hidden' : ''}"
+        data-subject="${_ptEsc(sub)}"
+        style="--pt-color:${color};"
+        onclick="ptToggleSubject(this, '${_ptEsc(sub).replace(/'/g,"\\'")}')">
+        <span class="pt-toggle-dot"></span>${_ptEsc(sub)}
+      </button>`;
+    }).join('');
+  }
+
+  // ── Canvas dimensions ─────────────────────────────────────
+  const wrap = canvas.parentElement;
+  const W = wrap.clientWidth || 600;
+  const H = isMobile ? 220 : 280;
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  const PAD_L = 46, PAD_R = isMobile ? 12 : 20;
+  const PAD_T = 20, PAD_B = isMobile ? 56 : 64;
+
+  canvas.width  = Math.round(W * DPR);
+  canvas.height = Math.round(H * DPR);
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+
+  // ── Theme colours ─────────────────────────────────────────
+  const gridColor  = isDark ? '#374151' : '#e5e7eb';
+  const labelColor = isDark ? '#9ca3af' : '#6b7280';
+  const bgColor    = isDark ? '#1e2736' : '#fafbfc';
+  const baseColor  = isDark ? '#4a5568' : '#d1d5db';
+
+  // ── Background ────────────────────────────────────────────
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Y-axis grid lines (0, 25, 50, 75, 100) ───────────────
+  const gridVals = [0, 25, 50, 75, 100];
+  ctx.textAlign = 'right';
+  ctx.font = `${isMobile ? 9 : 10}px Plus Jakarta Sans, system-ui, sans-serif`;
+  ctx.fillStyle = labelColor;
+  gridVals.forEach(v => {
+    const y = PAD_T + chartH - (v / 100) * chartH;
+    ctx.strokeStyle = v === 0 ? baseColor : gridColor;
+    ctx.lineWidth   = v === 0 ? 1.5 : 1;
+    ctx.setLineDash(v === 0 ? [] : [4, 4]);
+    ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(PAD_L + chartW, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = labelColor;
+    ctx.fillText(v + '%', PAD_L - 5, y + 3.5);
+  });
+
+  // ── X-axis labels (exam names) ────────────────────────────
+  if (examLabels.length === 1) {
+    // Single exam — centre label only
+    const x = PAD_L + chartW / 2;
+    ctx.textAlign = 'center';
+    ctx.font = `${isMobile ? 9 : 10}px Plus Jakarta Sans, system-ui, sans-serif`;
+    ctx.fillStyle = labelColor;
+    const label = examLabels[0].length > 16 ? examLabels[0].slice(0, 14) + '…' : examLabels[0];
+    ctx.fillText(label, x, PAD_T + chartH + 18);
+  } else {
+    examLabels.forEach((label, i) => {
+      const x = PAD_L + (i / (examLabels.length - 1)) * chartW;
+      ctx.save();
+      ctx.translate(x, PAD_T + chartH + 10);
+      ctx.rotate(-Math.PI / 5);
+      ctx.textAlign = 'right';
+      ctx.font = `${isMobile ? 9 : 10}px Plus Jakarta Sans, system-ui, sans-serif`;
+      ctx.fillStyle = labelColor;
+      const short = label.length > 18 ? label.slice(0, 16) + '…' : label;
+      ctx.fillText(short, 0, 0);
+      ctx.restore();
+    });
+  }
+
+  // ── Lines + dots per subject ──────────────────────────────
+  const visibleSubjects = allSubjects.filter(s => !_ptHiddenSubjects.has(s));
+
+  visibleSubjects.forEach(sub => {
+    const color = colorMap[sub];
+    const points = studentExams.map((x, i) => {
+      const s = x.result.subjectScores[sub];
+      if (!s || s.mark === 'AB' || s.pct === null) return null;
+      const px = PAD_L + (examLabels.length === 1 ? chartW / 2 : (i / (examLabels.length - 1)) * chartW);
+      const py = PAD_T + chartH - (s.pct / 100) * chartH;
+      return { x: px, y: py, pct: s.pct, mark: s.mark, max: s.max };
+    });
+
+    // Draw the line (skip nulls)
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 2.5;
+    ctx.lineJoin    = 'round';
+    ctx.setLineDash([]);
+
+    let drawing = false;
+    points.forEach(pt => {
+      if (!pt) { drawing = false; return; }
+      if (!drawing) { ctx.beginPath(); ctx.moveTo(pt.x, pt.y); drawing = true; }
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.stroke();
+
+    // Shaded area under the line
+    const validPts = points.filter(Boolean);
+    if (validPts.length >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(validPts[0].x, PAD_T + chartH);
+      validPts.forEach(pt => ctx.lineTo(pt.x, pt.y));
+      ctx.lineTo(validPts[validPts.length - 1].x, PAD_T + chartH);
+      ctx.closePath();
+      ctx.fillStyle = color + '18'; // 10% opacity fill
+      ctx.fill();
+    }
+
+    // Draw dots + value labels
+    points.forEach(pt => {
+      if (!pt) return;
+      // Dot
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, isMobile ? 4 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = bgColor;
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Value label above dot
+      ctx.textAlign = 'center';
+      ctx.font = `bold ${isMobile ? 8.5 : 10}px Plus Jakarta Sans, system-ui, sans-serif`;
+      ctx.fillStyle = color;
+      ctx.fillText(pt.pct + '%', pt.x, pt.y - (isMobile ? 9 : 11));
+    });
+  });
+
+  // Draw "Overall %" as a dashed line on top
+  const overallPts = studentExams.map((x, i) => {
+    if (x.result.pct === null) return null;
+    const px = PAD_L + (examLabels.length === 1 ? chartW / 2 : (i / (examLabels.length - 1)) * chartW);
+    const py = PAD_T + chartH - (x.result.pct / 100) * chartH;
+    return { x: px, y: py, pct: x.result.pct };
+  });
+
+  if (!_ptHiddenSubjects.has('__overall__')) {
+    ctx.strokeStyle = isDark ? '#e2e8f0' : '#1f2937';
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([6, 4]);
+    let drawing = false;
+    overallPts.forEach(pt => {
+      if (!pt) { drawing = false; return; }
+      if (!drawing) { ctx.beginPath(); ctx.moveTo(pt.x, pt.y); drawing = true; }
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    overallPts.filter(Boolean).forEach(pt => {
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, isMobile ? 4 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = isDark ? '#1e2736' : '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = isDark ? '#e2e8f0' : '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+  }
+
+  // ── Legend ────────────────────────────────────────────────
+  if (legendWrap) {
+    const overallHidden = _ptHiddenSubjects.has('__overall__');
+    const overallColor  = isDark ? '#e2e8f0' : '#1f2937';
+    legendWrap.innerHTML =
+      `<button class="pt-legend-item${overallHidden ? ' pt-toggle-hidden' : ''}" onclick="ptToggleSubject(this,'__overall__')" style="--pt-color:${overallColor};">
+        <svg width="18" height="8" style="vertical-align:middle;margin-right:4px;"><line x1="0" y1="4" x2="18" y2="4" stroke="${overallColor}" stroke-width="2" stroke-dasharray="5,3"/></svg>
+        Overall %
+      </button>` +
+      allSubjects.map(sub => {
+        const c = colorMap[sub];
+        const h = _ptHiddenSubjects.has(sub);
+        return `<button class="pt-legend-item${h ? ' pt-toggle-hidden' : ''}" onclick="ptToggleSubject(this,'${_ptEsc(sub).replace(/'/g,"\\'")}');" style="--pt-color:${c};">
+          <svg width="18" height="8" style="vertical-align:middle;margin-right:4px;"><line x1="0" y1="4" x2="18" y2="4" stroke="${c}" stroke-width="2.5"/></svg>
+          ${_ptEsc(sub)}
+        </button>`;
+      }).join('');
+  }
+}
+
+// ── Toggle a subject line on/off ─────────────────────────────
+window.ptToggleSubject = function (btn, subject) {
+  if (_ptHiddenSubjects.has(subject)) _ptHiddenSubjects.delete(subject);
+  else _ptHiddenSubjects.add(subject);
+  // Re-render the full tracker to refresh both toggles + chart
+  _ptRender();
+};
 }
 
 // ── Build text summary for a student ──────────────────────────
@@ -306,4 +551,5 @@ Object.assign(window, {
   openProgressTracker,
   closeProgressTracker,
   ptRender: _ptRender,
+  ptToggleSubject: window.ptToggleSubject,
 });
