@@ -10,9 +10,6 @@
   NODE_VERSION = "20"
 
 # ── SPA fallback ──────────────────────────────────────────────────────────────
-# GradeFlow is a single-page app. All unmatched paths must serve index.html
-# so the app shell loads and handles everything client-side. Status 200 (not
-# 301/302) so the browser URL stays unchanged and the SW registers at root scope.
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
@@ -20,55 +17,34 @@
 
 # ── HTTP caching headers ──────────────────────────────────────────────────────
 
-# index.html — never cache; browsers must always fetch the latest shell so
-# updated hashed bundles are discovered immediately.
 [[headers]]
   for = "/index.html"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
-# Service worker — never cache. The browser compares the SW byte-for-byte on
-# every page load; stale HTTP cache here means users never see updates.
 [[headers]]
   for = "/sw.js"
   [headers.values]
-    Cache-Control    = "no-cache, no-store, must-revalidate"
+    Cache-Control          = "no-cache, no-store, must-revalidate"
     Service-Worker-Allowed = "/"
 
-# Web App Manifest — short cache; rarely changes but shouldn't be stale.
 [[headers]]
   for = "/manifest.json"
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
-# Hashed JS/CSS bundles — immutable forever. Vite fingerprints every filename
-# so a new deploy always produces new URLs; old URLs are safe to cache forever.
 [[headers]]
   for = "/src/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# App icons — cache for one week. Rarely change; safe to cache longer.
 [[headers]]
   for = "/icons/*"
   [headers.values]
     Cache-Control = "public, max-age=604800"
 
 # ── Content Security Policy ───────────────────────────────────────────────────
-# Applied to all pages. Allows Firebase Firestore (sync relay), CDN scripts
-# (QRCode.js, jsQR, pako), and camera access (media-src) for QR scanning.
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = """
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.gstatic.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      font-src 'self' https://fonts.gstatic.com;
-      connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com;
-      media-src 'self' blob: mediastream:;
-      img-src 'self' data: blob:;
-      worker-src 'self' blob:;
-      frame-src 'none';
-      object-src 'none';
-    """
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com; media-src 'self' blob: mediastream:; img-src 'self' data: blob:; worker-src 'self' blob:; frame-src 'none'; object-src 'none';"

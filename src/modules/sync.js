@@ -249,11 +249,45 @@ async function _renderQR(text, canvas) {
   if (typeof QRCode === 'undefined') {
     await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js');
   }
+
+  // qrcode 1.5.3 on cdnjs uses the DOM constructor API (new QRCode(el, opts)),
+  // not QRCode.toCanvas(). We create a temp div, let the library render into it,
+  // then copy the resulting canvas pixels into our target canvas.
   return new Promise((resolve, reject) => {
-    QRCode.toCanvas(canvas, text, {
-      width: 280, margin: 2,
-      color: { dark: '#e2e8f0', light: '#0d1117' }
-    }, err => err ? reject(err) : resolve());
+    try {
+      const tmp = document.createElement('div');
+      tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+      document.body.appendChild(tmp);
+
+      const qr = new QRCode(tmp, {
+        text,
+        width:            280,
+        height:           280,
+        colorDark:        '#e2e8f0',
+        colorLight:       '#0d1117',
+        correctLevel:     QRCode.CorrectLevel.M,
+      });
+
+      // The library renders asynchronously via a short timeout
+      setTimeout(() => {
+        const srcCanvas = tmp.querySelector('canvas');
+        if (!srcCanvas) {
+          document.body.removeChild(tmp);
+          reject(new Error('QRCode canvas not found'));
+          return;
+        }
+        // Size our target canvas and copy pixels
+        canvas.width  = srcCanvas.width;
+        canvas.height = srcCanvas.height;
+        canvas.style.width  = '280px';
+        canvas.style.height = '280px';
+        canvas.getContext('2d').drawImage(srcCanvas, 0, 0);
+        document.body.removeChild(tmp);
+        resolve();
+      }, 120);
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
