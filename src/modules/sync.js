@@ -48,7 +48,7 @@ const _CODE_TTL_MS  = 24 * 60 * 60 * 1000; // 24 hours
 const _CODE_TTL_LABEL = '24 hours';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const MAX_QR_BYTES = 1800;
+const MAX_QR_BYTES = 2200; // QR v40 ECC-M holds 2331 bytes; ~80 char envelope overhead → 2200 safe payload
 const SYNC_VERSION = 2;
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -607,10 +607,14 @@ console.log('[GradeFlow Sync v2] Module loaded — async 24h relay active');
 // This is a compact implementation sufficient for GradeFlow sync payloads.
 // (~6 KB minified, covers data up to ~500 chars at ECC-M)
 
+// ─── Self-contained QR Code encoder v2 — supports versions 1–40 ─────────────
+// Byte mode, ECC level M. Covers up to 2331 bytes (v40-M).
+// No external dependencies. Works fully offline.
 const _QR = (() => {
+
   // ── GF(256) arithmetic ──────────────────────────────────────
   const EXP = new Uint8Array(512);
-  const LOG = new Uint8Array(256);
+  const LOG  = new Uint8Array(256);
   (() => {
     let x = 1;
     for (let i = 0; i < 255; i++) {
@@ -619,223 +623,266 @@ const _QR = (() => {
     }
     for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
   })();
-  const gfMul = (a, b) => a && b ? EXP[LOG[a] + LOG[b]] : 0;
+  const gfMul = (a, b) => a && b ? EXP[(LOG[a] + LOG[b]) % 255] : 0;
   const gfPow = (x, p) => EXP[(LOG[x] * p) % 255];
 
-  // RS polynomial generator
   function rsGenerator(n) {
     let g = [1];
     for (let i = 0; i < n; i++) {
-      const f = [1, gfPow(2, i)];
-      const r = new Array(g.length + 1).fill(0);
+      const f = [1, gfPow(2, i)], r = new Array(g.length + 1).fill(0);
       for (let j = 0; j < g.length; j++)
         for (let k = 0; k < f.length; k++)
-          r[j + k] ^= gfMul(g[j], f[k]);
+          r[j+k] ^= gfMul(g[j], f[k]);
       g = r;
     }
     return g;
   }
 
-  // RS encode
   function rsEncode(data, ecCount) {
     const gen = rsGenerator(ecCount);
     const msg = [...data, ...new Array(ecCount).fill(0)];
     for (let i = 0; i < data.length; i++) {
       const c = msg[i];
-      if (c) for (let j = 0; j < gen.length; j++)
-        msg[i + j] ^= gfMul(gen[j], c);
+      if (c) for (let j = 0; j < gen.length; j++) msg[i+j] ^= gfMul(gen[j], c);
     }
     return msg.slice(data.length);
   }
 
-  // ── Version / EC parameters table (versions 1–10, ECC-M) ──────────────────
-  // [version]: [ecCodewordsPerBlock, blocks, totalDataCodewords]
-  const EC_M = {
-    1:[10,1,16], 2:[16,1,28], 3:[26,1,44], 4:[18,2,64],
-    5:[24,2,86], 6:[16,4,108], 7:[18,4,124], 8:[22,4,154],
-    9:[22,5,182], 10:[26,5,216]
-  };
+  // ── ECC-M parameters for versions 1–40 ────────────────────────────────────
+  // Format: [ecPerBlock, numBlocks1, dataPerBlock1, numBlocks2, dataPerBlock2]
+  // Total data codewords = numBlocks1*dataPerBlock1 + numBlocks2*dataPerBlock2
+  const EC_M = [
+    null, // 0 unused
+    [10,1,16,0,0],    // 1:  16
+    [16,1,28,0,0],    // 2:  28
+    [26,1,44,0,0],    // 3:  44
+    [18,2,32,0,0],    // 4:  64
+    [24,2,43,0,0],    // 5:  86
+    [16,4,27,0,0],    // 6:  108
+    [18,4,31,0,0],    // 7:  124
+    [22,2,38,2,39],   // 8:  154
+    [22,3,36,2,37],   // 9:  182
+    [26,4,43,1,44],   // 10: 216
+    [30,1,50,4,51],   // 11: 254
+    [22,6,36,2,37],   // 12: 290
+    [22,8,37,1,38],   // 13: 334
+    [24,4,40,5,41],   // 14: 365
+    [24,5,41,5,42],   // 15: 415
+    [28,7,45,3,46],   // 16: 453
+    [28,10,46,1,47],  // 17: 507
+    [26,9,43,4,44],   // 18: 563
+    [26,3,44,11,45],  // 19: 589
+    [26,3,41,13,42],  // 20: 647
+    [26,17,42,0,0],   // 21: 714
+    [28,17,46,0,0],   // 22: 718
+    [24,4,47,14,48],  // 23: 792
+    [28,6,45,14,46],  // 24: 858
+    [30,8,47,13,48],  // 25: 929
+    [28,19,46,4,47],  // 26: 1003
+    [30,22,45,3,46],  // 27: 1091
+    [30,3,45,23,46],  // 28: 1171
+    [30,21,45,7,46],  // 29: 1273
+    [30,19,45,10,46], // 30: 1367
+    [30,2,45,29,46],  // 31: 1455
+    [30,10,45,23,46], // 32: 1541
+    [30,14,45,21,46], // 33: 1631
+    [30,14,46,23,47], // 34: 1725
+    [30,12,45,26,46], // 35: 1812
+    [30,6,45,34,46],  // 36: 1914
+    [30,29,45,14,46], // 37: 1992 (approx)
+    [30,13,45,32,46], // 38: 2102 (approx)
+    [30,40,45,7,46],  // 39: 2216 (approx)
+    [30,18,45,31,46], // 40: 2331
+  ];
 
-  function pickVersion(dataLen) {
-    // bytes needed = 2 (mode+length indicator) + dataLen + 4 (terminator) rounded up to codeword
-    for (let v = 1; v <= 10; v++) {
-      if (EC_M[v][2] >= dataLen + 3) return v;
+  function totalData(v) {
+    const [,n1,d1,n2,d2] = EC_M[v];
+    return n1*d1 + n2*d2;
+  }
+
+  function pickVersion(byteLen) {
+    for (let v = 1; v <= 40; v++) {
+      // Need byteLen + 4 (mode+length) bytes; length indicator is 8 bits for v≤9, 16 for v≥10
+      const overhead = v <= 9 ? 3 : 4;
+      if (totalData(v) >= byteLen + overhead) return v;
     }
-    throw new Error('Data too long for QR v10');
+    throw new Error('Data too long for QR v40 — split into smaller chunks');
+  }
+
+  // ── Alignment pattern centre positions ────────────────────
+  const ALIGN_POS = [
+    [],[], [6,18],[6,22],[6,26],[6,30],[6,34],
+    [6,22,38],[6,24,42],[6,26,46],[6,28,50],
+    [6,30,54],[6,32,58],[6,34,62],[6,26,46,66],
+    [6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],
+    [6,30,58,86],[6,34,62,90],[6,28,50,72,94],
+    [6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],
+    [6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],
+    [6,26,50,74,98,122],[6,30,54,78,102,126],
+    [6,26,52,78,104,130],[6,30,56,82,108,134],
+    [6,34,60,86,112,138],[6,30,58,86,114,142],
+    [6,34,62,90,118,146],[6,30,54,78,102,126,150],
+    [6,24,50,76,102,128,154],[6,28,54,80,106,132,158],
+    [6,32,58,84,110,136,162],[6,26,54,82,110,138,166],
+    [6,30,58,86,114,142,170],
+  ];
+
+  const FORMAT_MASK_BITS = 0b101010000010010;
+  function formatBits(maskId) {
+    let d = (0b00 << 3) | maskId; // ECC M = 00
+    let g = d << 10;
+    for (let i = 4; i >= 0; i--)
+      if ((g >> (i+10)) & 1) g ^= (0b10100110111 << i);
+    return ((d << 10) | (g & 0x3FF)) ^ FORMAT_MASK_BITS;
   }
 
   // ── Bitstream builder ──────────────────────────────────────
   class Bits {
-    constructor() { this.data = []; this.bitLen = 0; }
+    constructor() { this.buf = []; this.len = 0; }
     push(val, n) {
-      for (let i = n - 1; i >= 0; i--) {
-        const bit = (val >> i) & 1;
-        const byte = this.bitLen >> 3, bit2 = 7 - (this.bitLen & 7);
-        if (bit2 === 7) this.data.push(0);
-        if (bit) this.data[byte] |= (1 << bit2);
-        this.bitLen++;
+      for (let i = n-1; i >= 0; i--) {
+        if (!(this.len & 7)) this.buf.push(0);
+        if ((val >> i) & 1) this.buf[this.len >> 3] |= 1 << (7 - (this.len & 7));
+        this.len++;
       }
     }
     toBytes(cap) {
-      // Terminator + padding
-      const rem = cap * 8 - this.bitLen;
+      const rem = cap*8 - this.len;
       this.push(0, Math.min(4, rem));
-      while (this.bitLen % 8) this.push(0, 1);
-      const PAD = [0xEC, 0x11];
+      while (this.len & 7) this.push(0, 1);
       let pi = 0;
-      while (this.data.length < cap) this.data.push(PAD[pi++ & 1]);
-      return this.data.slice(0, cap);
+      while (this.buf.length < cap) this.buf.push(pi++ & 1 ? 0x11 : 0xEC);
+      return this.buf.slice(0, cap);
     }
   }
 
-  // ── Alignment pattern positions ────────────────────────────
-  const ALIGN = {5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};
-
-  // ── Format info masks (ECC-M) ──────────────────────────────
-  // format = ECC_M(01) + mask(000..111) XOR 101010000010010
-  const FORMAT_MASK = 0b101010000010010;
-  function formatBits(mask) {
-    let d = (0b00 << 3) | mask; // ECC-M = 00
-    let g = d << 10;
-    // Divide by generator 10100110111
-    for (let i = 4; i >= 0; i--)
-      if ((g >> (i + 10)) & 1) g ^= 0b10100110111 << i;
-    return ((d << 10) | g) ^ FORMAT_MASK;
+  // ── Matrix utilities ───────────────────────────────────────
+  function makeMatrix(size) {
+    return Array.from({length:size}, () => new Int8Array(size).fill(-1));
+  }
+  function setFinder(m, r, c) {
+    const size = m.length;
+    for (let dr = -1; dr <= 7; dr++) for (let dc = -1; dc <= 7; dc++) {
+      const rr = r+dr, cc = c+dc;
+      if (rr < 0 || cc < 0 || rr >= size || cc >= size) continue;
+      if (dr < 0 || dc < 0 || dr > 7 || dc > 7) { if (m[rr][cc] < 0) m[rr][cc] = 0; continue; }
+      const ring = dr===0||dr===6||dc===0||dc===6;
+      const mid  = dr>=2&&dr<=4&&dc>=2&&dc<=4;
+      m[rr][cc] = (ring||mid) ? 1 : 0;
+    }
+  }
+  function setAlignment(m, r, c) {
+    for (let dr=-2; dr<=2; dr++) for (let dc=-2; dc<=2; dc++) {
+      const v = (Math.abs(dr)===2||Math.abs(dc)===2) ? 1 : (dr===0&&dc===0 ? 1 : 0);
+      if (m[r+dr][c+dc] < 0) m[r+dr][c+dc] = v;
+    }
   }
 
-  // ── Matrix builder ─────────────────────────────────────────
-  function buildMatrix(version, data) {
-    const size = version * 4 + 17;
-    const m = Array.from({length: size}, () => new Array(size).fill(null)); // null=free
-    const set = (r, c, v) => { if (r >= 0 && r < size && c >= 0 && c < size) m[r][c] = v; };
-    const reserve = (r, c) => { if (m[r][c] === null) m[r][c] = 0; };
+  // Mask pattern 2: row % 2 == 0 (good balance, commonly used)
+  const MASK_ID = 2;
+  const maskFn  = (r, c) => r % 2 === 0;
 
-    // Finder patterns
-    function finder(r, c) {
-      for (let dr = -1; dr <= 7; dr++) for (let dc = -1; dc <= 7; dc++) {
-        if (dr < 0 || dc < 0 || dr > 7 || dc > 7) { set(r+dr, c+dc, 0); continue; }
-        const inner = dr >= 1 && dr <= 5 && dc >= 1 && dc <= 5;
-        const ring  = dr === 0 || dr === 6 || dc === 0 || dc === 6;
-        set(r+dr, c+dc, ring && !inner ? 1 : inner ? 0 : 1);
-      }
-      // Separator
-      for (let i = -1; i <= 7; i++) { reserve(r+7, c+i); reserve(r+i, c+7); }
-    }
-    finder(0, 0); finder(0, size-7); finder(size-7, 0);
+  function buildMatrix(version, codewords) {
+    const size = version*4 + 17;
+    const m    = makeMatrix(size);
 
-    // Timing patterns
-    for (let i = 8; i < size - 8; i++) {
-      m[6][i] = i % 2 === 0 ? 1 : 0;
-      m[i][6] = i % 2 === 0 ? 1 : 0;
+    // Finders
+    setFinder(m, 0, 0); setFinder(m, 0, size-7); setFinder(m, size-7, 0);
+
+    // Timing
+    for (let i = 8; i < size-8; i++) {
+      m[6][i] = i%2===0 ? 1 : 0;
+      m[i][6] = i%2===0 ? 1 : 0;
     }
 
     // Dark module
     m[size-8][8] = 1;
 
     // Alignment patterns
-    if (ALIGN[version]) {
-      const pos = ALIGN[version];
-      for (const r of pos) for (const c of pos) {
-        if (m[r][c] !== null) continue;
-        for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
-          const ring = Math.abs(dr) === 2 || Math.abs(dc) === 2;
-          const center = dr === 0 && dc === 0;
-          set(r+dr, c+dc, ring || center ? 1 : 0);
-        }
+    const ap = ALIGN_POS[version];
+    for (const r of ap) for (const c of ap) {
+      if (m[r][c] < 0) setAlignment(m, r, c);
+    }
+
+    // Version info (v7+)
+    if (version >= 7) {
+      let vinfo = version << 12;
+      for (let i = 11; i >= 0; i--)
+        if ((vinfo >> (i+12)) & 1) vinfo ^= (0b1111100100101 << i);
+      const vi = (version << 12) | (vinfo & 0xFFF);
+      for (let i = 0; i < 18; i++) {
+        const bit = (vi >> i) & 1;
+        m[Math.floor(i/3)][size-11+(i%3)] = bit;
+        m[size-11+(i%3)][Math.floor(i/3)] = bit;
       }
     }
 
-    // Format info areas (reserved)
-    for (let i = 0; i < 9; i++) { reserve(8, i); reserve(i, 8); }
-    for (let i = size-8; i < size; i++) { reserve(8, i); reserve(i, 8); }
+    // Reserve format areas
+    for (let i = 0; i < 9; i++) { if (m[8][i] < 0) m[8][i] = 0; if (m[i][8] < 0) m[i][8] = 0; }
+    for (let i = size-8; i < size; i++) { if (m[8][i] < 0) m[8][i] = 0; if (m[i][8] < 0) m[i][8] = 0; }
 
-    // Data placement
-    let bit = 0;
-    const bits = data.flatMap(b => [7,6,5,4,3,2,1,0].map(i => (b >> i) & 1));
-    let col = size - 1;
+    // Data placement (right-to-left columns, alternating up/down)
+    const bits = codewords.flatMap(b => [7,6,5,4,3,2,1,0].map(i => (b>>i)&1));
+    let bi = 0, col = size-1;
     while (col > 0) {
-      if (col === 6) col--; // skip timing column
-      for (let row2 = 0; row2 < size; row2++) {
-        const row = ((col - (col < 6 ? 0 : 1)) % 4 < 2) ? (size - 1 - row2) : row2;
-        for (let dx = 0; dx <= 1; dx++) {
+      if (col === 6) col--;
+      const upward = (Math.floor((size-1-col)/2)) % 2 === 0;
+      for (let row = 0; row < size; row++) {
+        const r = upward ? (size-1-row) : row;
+        for (let dx = 0; dx < 2; dx++) {
           const c = col - dx;
-          if (m[row][c] === null) {
-            m[row][c] = (bit < bits.length) ? (bits[bit++] ^ 0) : 0;
+          if (m[r][c] < 0) {
+            const bit = bi < bits.length ? bits[bi++] : 0;
+            m[r][c] = bit ^ (maskFn(r,c) ? 1 : 0);
           }
         }
       }
       col -= 2;
     }
 
+    // Write format info
+    const fb   = formatBits(MASK_ID);
+    const fmtL = [];
+    for (let i = 14; i >= 0; i--) fmtL.push((fb>>i)&1);
+    const ri = [0,1,2,3,4,5,7,8,8,8,8,8,8,8,8];
+    const ci = [8,8,8,8,8,8,8,8,7,5,4,3,2,1,0];
+    for (let i = 0; i < 15; i++) { m[ri[i]][ci[i]] = fmtL[i]; }
+    for (let i = 0; i < 8; i++)  m[8][size-1-i]   = fmtL[i];
+    for (let i = 0; i < 7; i++)  m[size-7+i][8]   = fmtL[14-i];
+
     return m;
   }
 
-  // Apply mask pattern 0: (row+col) % 2 == 0
-  function applyMask(m) {
-    const size = m.length;
-    const copy = m.map(r => [...r]);
-    for (let r = 0; r < size; r++)
-      for (let c = 0; c < size; c++)
-        if (copy[r][c] !== null && (r + c) % 2 === 0) copy[r][c] ^= 1;
-    return copy;
-  }
-
-  // Write format info (mask 0)
-  function writeFormat(m) {
-    const size = m.length;
-    const fb = formatBits(0); // mask pattern 0
-    const bits = [];
-    for (let i = 14; i >= 0; i--) bits.push((fb >> i) & 1);
-    // Top-left
-    const pos1 = [0,1,2,3,4,5,7,8,8,8,8,8,8,8,8];
-    const pos2 = [8,8,8,8,8,8,8,8,7,5,4,3,2,1,0];
-    for (let i = 0; i < 15; i++) { m[pos1[i]][pos2[i]] = bits[i]; }
-    // Top-right and bottom-left
-    for (let i = 0; i < 8; i++) m[8][size-1-i] = bits[i];
-    for (let i = 0; i < 7; i++) m[size-7+i][8] = bits[14-i];
-  }
-
-  // ── Main encode function ───────────────────────────────────
+  // ── Encode text → QR matrix ────────────────────────────────
   function encode(text) {
-    const bytes = new TextEncoder().encode(text);
+    const bytes   = new TextEncoder().encode(text);
     const version = pickVersion(bytes.length);
-    const [ecCount, blocks, dataWords] = EC_M[version];
+    const [ecCount, n1, d1, n2, d2] = EC_M[version];
+    const dataTotal = n1*d1 + n2*d2;
 
-    // Build bitstream
     const bs = new Bits();
-    bs.push(0b0100, 4);          // byte mode
-    bs.push(bytes.length, 8);    // char count
+    bs.push(0b0100, 4);                           // byte mode
+    bs.push(bytes.length, version <= 9 ? 8 : 16); // char count
     bytes.forEach(b => bs.push(b, 8));
-    const codewords = bs.toBytes(dataWords);
+    const codewords = bs.toBytes(dataTotal);
 
-    // Split into blocks and add EC
-    const blockSize = Math.floor(dataWords / blocks);
-    const extra = dataWords % blocks;
+    // Block interleaving
     const dataBlocks = [], ecBlocks = [];
     let pos = 0;
-    for (let i = 0; i < blocks; i++) {
-      const len = blockSize + (i >= blocks - extra ? 1 : 0);
-      const block = codewords.slice(pos, pos + len);
-      dataBlocks.push(block);
-      ecBlocks.push(rsEncode(block, ecCount));
-      pos += len;
-    }
+    for (let i = 0; i < n1; i++) { dataBlocks.push(codewords.slice(pos, pos+d1)); ecBlocks.push(rsEncode(dataBlocks[dataBlocks.length-1], ecCount)); pos += d1; }
+    for (let i = 0; i < n2; i++) { dataBlocks.push(codewords.slice(pos, pos+d2)); ecBlocks.push(rsEncode(dataBlocks[dataBlocks.length-1], ecCount)); pos += d2; }
 
-    // Interleave
-    const interleaved = [];
-    const maxD = Math.max(...dataBlocks.map(b => b.length));
-    for (let i = 0; i < maxD; i++)
-      dataBlocks.forEach(b => { if (i < b.length) interleaved.push(b[i]); });
-    const maxE = Math.max(...ecBlocks.map(b => b.length));
-    for (let i = 0; i < maxE; i++)
-      ecBlocks.forEach(b => { if (i < b.length) interleaved.push(b[i]); });
+    const out = [];
+    const maxD = Math.max(...dataBlocks.map(b=>b.length));
+    for (let i = 0; i < maxD; i++) dataBlocks.forEach(b => { if (i < b.length) out.push(b[i]); });
+    const maxE = Math.max(...ecBlocks.map(b=>b.length));
+    for (let i = 0; i < maxE; i++) ecBlocks.forEach(b => { if (i < b.length) out.push(b[i]); });
 
-    // Build matrix
-    const matrix = buildMatrix(version, interleaved);
-    const masked = applyMask(matrix);
-    writeFormat(masked);
+    // Remainder bits
+    const rem = [0,0,7,7,7,7,7,0,0,0,0,0,0,0,3,3,3,3,3,3,3,4,4,4,4,4,4,4,3,3,3,3,3,3,3,0,0,0,0,0,0];
+    for (let i = 0; i < rem[version]; i++) out.push(0);
 
-    return { matrix: masked, size: masked.length };
+    return { matrix: buildMatrix(version, out), size: version*4+17, version };
   }
 
   // ── Draw to canvas ─────────────────────────────────────────
@@ -844,7 +891,7 @@ const _QR = (() => {
     const quiet  = opts.quiet  ?? 3;
     const dark   = opts.dark   ?? '#000000';
     const light  = opts.light  ?? '#ffffff';
-    const total  = size + quiet * 2;
+    const total  = size + quiet*2;
     const module = Math.max(1, Math.floor((opts.width ?? 280) / total));
     const px     = total * module;
 
@@ -853,17 +900,12 @@ const _QR = (() => {
     canvas.style.height = (opts.width ?? 280) + 'px';
 
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = light;
-    ctx.fillRect(0, 0, px, px);
+    ctx.fillStyle = light; ctx.fillRect(0, 0, px, px);
     ctx.fillStyle = dark;
-
     for (let r = 0; r < size; r++)
       for (let c = 0; c < size; c++)
-        if (matrix[r][c]) {
-          const x = (quiet + c) * module;
-          const y = (quiet + r) * module;
-          ctx.fillRect(x, y, module, module);
-        }
+        if (matrix[r][c] === 1)
+          ctx.fillRect((quiet+c)*module, (quiet+r)*module, module, module);
   }
 
   return { encode, toCanvas };
