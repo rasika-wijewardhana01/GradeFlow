@@ -228,30 +228,49 @@ async function _downloadFromFirestore(code) {
 // ─── QR Code Transfer ─────────────────────────────────────────────────────────
 
 async function _prepareQRChunks() {
-  const json = await _getBackupPayload();
+  const json       = await _getBackupPayload();
   const compressed = _compress(json);
+
+  // Calculate how many bytes the envelope consumes so we know exactly
+  // how many payload chars fit inside QR v40-M (2331 bytes max).
+  // Envelope: {"v":2,"t":"gf-sync","ts":1234567890123,"n":99,"i":99,"d":""}
+  // That's roughly 70 chars worst-case. Leave 100 for safety.
+  const QR_MAX      = 2200;           // well under v40-M's 2331-byte limit
+  const ENVELOPE_OH = 100;            // envelope overhead chars
+  const PAYLOAD_MAX = QR_MAX - ENVELOPE_OH; // = 2100 chars per chunk payload
+
   const envelope = { v: SYNC_VERSION, t: 'gf-sync', ts: Date.now() };
 
-  if (compressed.length <= MAX_QR_BYTES - 60) {
-    return [JSON.stringify({ ...envelope, n: 1, i: 0, d: compressed })];
+  console.log(`[Sync QR] compressed size: ${compressed.length} chars`);
+
+  if (compressed.length <= PAYLOAD_MAX) {
+    const qrStr = JSON.stringify({ ...envelope, n: 1, i: 0, d: compressed });
+    console.log(`[Sync QR] single QR, string length: ${qrStr.length}`);
+    return [qrStr];
   }
 
+  // Split into chunks of exactly PAYLOAD_MAX chars
   const chunks = [];
-  for (let i = 0; i < compressed.length; i += MAX_QR_BYTES) {
-    chunks.push(compressed.slice(i, i + MAX_QR_BYTES));
+  for (let i = 0; i < compressed.length; i += PAYLOAD_MAX) {
+    chunks.push(compressed.slice(i, i + PAYLOAD_MAX));
   }
-  return chunks.map((chunk, i) =>
-    JSON.stringify({ ...envelope, n: chunks.length, i, d: chunk })
-  );
+
+  return chunks.map((chunk, i) => {
+    const qrStr = JSON.stringify({ ...envelope, n: chunks.length, i, d: chunk });
+    console.log(`[Sync QR] chunk ${i+1}/${chunks.length}, string length: ${qrStr.length}`);
+    return qrStr;
+  });
 }
 
 async function _renderQR(text, canvas) {
-  // Uses the self-contained _QR encoder bundled at the bottom of this file.
-  // No CDN, no external dependency, works fully offline.
+  // Safety check — QR v40-M max is 2331 bytes. Base64/ASCII = 1 char per byte.
+  if (text.length > 2300) {
+    throw new Error(`QR string too long (${text.length} chars). Max is 2300.`);
+  }
   try {
     _QR.toCanvas(canvas, text, {
-      width: 280,
-      quiet: 3,
+      width: 260,
+      quiet: 2,
       dark:  '#e2e8f0',
       light: '#0d1117',
     });
