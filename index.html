@@ -604,6 +604,7 @@
             <button class="sync-method-btn sync-method-primary" onclick="syncStartSendQR()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="17" y="17" width="4" height="4"/><rect x="14" y="14" width="3" height="3"/></svg>
               Send via QR Code
+              <span style="font-size:9px;opacity:0.55;display:block;margin-top:1px;">small classes · no internet</span>
             </button>
             <button class="sync-method-btn sync-method-secondary" onclick="syncShowCodeSetup()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
@@ -646,9 +647,9 @@
       </div>
 
       <p class="sync-method-hint">
-        <strong>QR Code</strong> — same room, no internet needed. &nbsp;
-        <strong>Sync Code</strong> — close this device, open the other one within 24 hours. &nbsp;
-        <strong>Backup File</strong> — send via WhatsApp, email, or USB.
+        <strong>QR Code</strong> — offline, instant, small classes only. &nbsp;
+        <strong>Sync Code</strong> — any size, internet required, 24h window. &nbsp;
+        <strong>Backup File</strong> — WhatsApp / USB / email fallback.
       </p>
     </div>
 
@@ -663,10 +664,29 @@
       </div>
 
       <p id="sync-qr-counter" class="sync-qr-counter">Preparing…</p>
+    </div>
 
-      <div class="sync-qr-nav" id="sync-qr-nav-buttons" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
-        <button id="sync-qr-prev" class="sync-nav-btn" onclick="syncQRPrev()" disabled>← Prev</button>
-        <button id="sync-qr-next" class="sync-nav-btn" onclick="syncQRNext()">Next →</button>
+    <!-- ── VIEW: QR TOO LARGE (auto-redirect to sync code) ────────────────── -->
+    <div data-sync-view="qr-too-large" class="sync-view" style="display:none;">
+      <button class="sync-back-btn" onclick="syncSetView('home')">← Back</button>
+      <div class="sync-too-large-box">
+        <div class="sync-too-large-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h3 class="sync-view-title" style="margin:0;">Data Too Large for QR</h3>
+        <p id="sync-qr-size-info" class="sync-view-desc" style="margin:8px 0 0;"></p>
+        <div class="sync-divider" style="margin:16px 0;"></div>
+        <p class="sync-view-desc" style="font-size:0.82rem;margin-bottom:14px;">
+          <strong>Sync Code</strong> is the best option for your class size — upload once, enter a 6-character code on your other device. Works from anywhere, no time pressure.
+        </p>
+        <button class="sync-action-btn sync-btn-primary" onclick="syncSetView('send-code-setup')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          Use Sync Code Instead
+        </button>
+        <button class="sync-action-btn sync-btn-ghost" style="margin-top:8px;width:100%;justify-content:center;" onclick="syncExportFile()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Or Save Backup File
+        </button>
       </div>
     </div>
 
