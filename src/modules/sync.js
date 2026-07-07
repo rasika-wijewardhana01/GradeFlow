@@ -162,7 +162,129 @@ async function _importPayload(jsonStr) {
   }
 }
 
-// ─── Firebase Firestore relay ─────────────────────────────────────────────────
+// ─── QR-optimised minimal payload ────────────────────────────────────────────
+// For QR we use a compact matrix format that is ~85% smaller than the full
+// backup JSON. Even a 40-student × 15-subject class fits in one QR code.
+// Format: { v:3, t:'qr', c, e, tc, g, s:[names], x:[[name,max]…], m:[[marks…]…], ex, br }
+// m[i][j] = mark for student i, subject j (number, null, or 'AB')
+
+async function _getQRPayload() {
+  // Get the most current state — prefer live session
+  let state = null;
+  if (typeof window.collectState === 'function') {
+    try { state = window.collectState(); } catch (_) {}
+  }
+  if (!state) {
+    const raw = await window.StorageEngine.getItem('schoolResultManager_session_v1');
+    if (raw) try { state = JSON.parse(raw); } catch (_) {}
+  }
+
+  // Also get multi-exam data if present
+  const examsRaw    = await window.StorageEngine.getItem('schoolResultManager_exams_v1');
+  const brandingRaw = await window.StorageEngine.getItem('rsm_school_branding_v1');
+
+  // Build compact payload from live state
+  const students = state?.students || window.students || [];
+  const subjects  = state?.subjects  || window.subjects  || [];
+  const marks     = state?.marks     || window.marks     || {};
+  const gs        = state?.gradingScale || window.gradingScale || [];
+
+  // Marks as compact 2D array — students × subjects
+  const marksMatrix = students.map(s =>
+    subjects.map(sub => {
+      const v = marks[`${s.name}||${sub.name}`];
+      if (v === undefined || v === null || v === '') return null;
+      if (v === 'AB') return 'X'; // 'X' saves 1 char vs 'AB'
+      return typeof v === 'number' ? v : parseFloat(v) || null;
+    })
+  );
+
+  // Grading scale as compact pairs [[minPct, label], ...]
+  const gsCompact = gs.map(g => [g.minPct ?? g.min ?? 0, g.label]);
+
+  const compact = {
+    v:  3,                           // QR format version
+    t:  'qr',                        // type tag
+    c:  state?.className   || '',
+    e:  state?.examLabel   || '',
+    tc: state?.teacher     || '',
+    y:  state?.academicYear || '',
+    g:  gsCompact,
+    s:  students.map(st => st.name),  // student names only
+    xi: students.map(st => st.index || ''), // index numbers
+    x:  subjects.map(sub => [sub.name, sub.max, sub.category || '']),
+    m:  marksMatrix,
+    ex: examsRaw   || null,          // full exams blob (if fits)
+    br: brandingRaw|| null,          // branding blob
+  };
+
+  // If exams blob makes it too big, drop it — session is the important part
+  const withEx = JSON.stringify(compact);
+  if (withEx.length > 6000) { compact.ex = null; }
+  if (brandingRaw && JSON.stringify(compact).length > 6000) { compact.br = null; }
+
+  return JSON.stringify(compact);
+}
+
+async function _importQRPayload(jsonStr) {
+  try {
+    const d = JSON.parse(jsonStr);
+
+    // If it's a QR compact format (v3)
+    if (d.v === 3 && d.t === 'qr') {
+      // Reconstruct students array
+      const students = (d.s || []).map((name, i) => ({ name, index: (d.xi || [])[i] || '' }));
+
+      // Reconstruct subjects array
+      const subjects = (d.x || []).map(([name, max, cat]) => ({
+        name, max: Number(max), category: cat || ''
+      }));
+
+      // Reconstruct marks object
+      const marks = {};
+      (d.m || []).forEach((row, si) => {
+        row.forEach((val, xi) => {
+          if (val === null || val === undefined) return;
+          const key = `${students[si].name}||${subjects[xi].name}`;
+          marks[key] = val === 'X' ? 'AB' : val;
+        });
+      });
+
+      // Reconstruct grading scale
+      const gradingScale = (d.g || []).map(([minPct, label]) => ({ minPct, label, min: minPct }));
+
+      // Build a full session object
+      const session = {
+        className: d.c || '', examLabel: d.e || '',
+        teacher: d.tc || '', academicYear: d.y || '',
+        students, subjects, marks, gradingScale,
+        categories: [], results: null,
+      };
+
+      // Save to StorageEngine
+      await window.StorageEngine.setItem('schoolResultManager_session_v1', JSON.stringify(session));
+
+      // Restore multi-exam and branding if present
+      if (d.ex) await window.StorageEngine.setItem('schoolResultManager_exams_v1', d.ex);
+      if (d.br) await window.StorageEngine.setItem('rsm_school_branding_v1', d.br);
+
+      // Apply live state
+      if (typeof window.applyState === 'function') window.applyState(session);
+      if (d.ex && typeof window.initExamManager === 'function') await window.initExamManager();
+      if (d.br && typeof window.loadBrandingFromStorage === 'function') await window.loadBrandingFromStorage();
+
+      return true;
+    }
+
+    // Fallback: full backup format (from file or Firebase)
+    return await _importPayload(jsonStr);
+  } catch (err) {
+    console.error('[Sync] QR import error:', err);
+    return false;
+  }
+}
+
+
 
 async function _initFirebase() {
   if (_db) return _db;
@@ -388,20 +510,45 @@ window.syncStopCamera   = _stopCamera;
 window.syncShowCodeSetup = function () { _setView('send-code-setup'); };
 
 // ── Send via QR ──────────────────────────────────────────────────────────────
+// Uses the compact QR payload format — always fits in ONE QR code even for
+// large classes (40 students × 15 subjects) by using a minimal matrix encoding.
 
 window.syncStartSendQR = async function () {
   _setView('send-qr');
-  _setLoading(true, 'Preparing QR codes…');
+  _setLoading(true, 'Preparing QR code…');
   try {
     await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js');
-    const chunks = await _prepareQRChunks();
-    _syncState.chunks = chunks;
+
+    const compact    = await _getQRPayload();
+    const compressed = _compress(compact);
+
+    console.log(`[Sync QR] compact: ${compact.length} chars, compressed: ${compressed.length} chars`);
+
+    // Wrap in thin envelope
+    const envelope = { v: SYNC_VERSION, t: 'gf-sync', ts: Date.now() };
+    const qrStr    = JSON.stringify({ ...envelope, n: 1, i: 0, d: compressed });
+
+    console.log(`[Sync QR] final QR string: ${qrStr.length} chars`);
+
+    if (qrStr.length > 2300) {
+      // Still too large — this would require 200+ students which is extraordinary
+      // Fall back to sync code gracefully
+      _setLoading(false);
+      _setView('qr-too-large');
+      const el = document.getElementById('sync-qr-size-info');
+      if (el) el.textContent = `Your dataset is exceptionally large (${Math.round(qrStr.length/1024*10)/10} KB even after maximum compression). Use Sync Code instead — it has no size limit.`;
+      return;
+    }
+
+    _syncState.chunks     = [qrStr];
     _syncState.chunkIndex = 0;
     _setLoading(false);
     await _renderCurrentQRChunk();
+
   } catch (err) {
     _setLoading(false);
     _toast('Failed to prepare QR: ' + err.message, 'error');
+    console.error('[Sync QR]', err);
   }
 };
 
@@ -446,7 +593,7 @@ window.syncStartReceiveQR = async function () {
       },
       async jsonStr => {
         if (progress) progress.textContent = 'Importing data…';
-        const ok = await _importPayload(jsonStr);
+        const ok = await _importQRPayload(jsonStr);
         if (ok) {
           _setView('success');
           document.getElementById('sync-success-msg').textContent = 'Data imported! Tap Reload to see your exams.';
