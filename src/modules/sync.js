@@ -350,33 +350,74 @@ async function _downloadFromFirestore(code) {
 // ─── QR Code Transfer ─────────────────────────────────────────────────────────
 
 async function _prepareQRChunks() {
-  const json = await _getBackupPayload();
+  const json       = await _getBackupPayload();
   const compressed = _compress(json);
+
+  // Calculate how many bytes the envelope consumes so we know exactly
+  // how many payload chars fit inside QR v40-M (2331 bytes max).
+  // Envelope: {"v":2,"t":"gf-sync","ts":1234567890123,"n":99,"i":99,"d":""}
+  // That's roughly 70 chars worst-case. Leave 100 for safety.
+  const QR_MAX      = 2200;           // well under v40-M's 2331-byte limit
+  const ENVELOPE_OH = 100;            // envelope overhead chars
+  const PAYLOAD_MAX = QR_MAX - ENVELOPE_OH; // = 2100 chars per chunk payload
+
   const envelope = { v: SYNC_VERSION, t: 'gf-sync', ts: Date.now() };
 
-  if (compressed.length <= MAX_QR_BYTES - 60) {
-    return [JSON.stringify({ ...envelope, n: 1, i: 0, d: compressed })];
+  console.log(`[Sync QR] compressed size: ${compressed.length} chars`);
+
+  if (compressed.length <= PAYLOAD_MAX) {
+    const qrStr = JSON.stringify({ ...envelope, n: 1, i: 0, d: compressed });
+    console.log(`[Sync QR] single QR, string length: ${qrStr.length}`);
+    return [qrStr];
   }
 
+  // Split into chunks of exactly PAYLOAD_MAX chars
   const chunks = [];
-  for (let i = 0; i < compressed.length; i += MAX_QR_BYTES) {
-    chunks.push(compressed.slice(i, i + MAX_QR_BYTES));
+  for (let i = 0; i < compressed.length; i += PAYLOAD_MAX) {
+    chunks.push(compressed.slice(i, i + PAYLOAD_MAX));
   }
-  return chunks.map((chunk, i) =>
-    JSON.stringify({ ...envelope, n: chunks.length, i, d: chunk })
-  );
+
+  return chunks.map((chunk, i) => {
+    const qrStr = JSON.stringify({ ...envelope, n: chunks.length, i, d: chunk });
+    console.log(`[Sync QR] chunk ${i+1}/${chunks.length}, string length: ${qrStr.length}`);
+    return qrStr;
+  });
 }
 
 async function _renderQR(text, canvas) {
-  // Uses the self-contained _QR encoder bundled at the bottom of this file.
-  // No CDN, no external dependency, works fully offline.
+  // IMPORTANT: Use BLACK dots on WHITE background.
+  // Inverted colours (white-on-dark) fail on most phone camera QR scanners.
+  // We then wrap the canvas in a white padding area so it's clearly visible
+  // against the dark modal background.
+  if (text.length > 2300) {
+    throw new Error(`QR string too long (${text.length} chars).`);
+  }
   try {
     _QR.toCanvas(canvas, text, {
-      width: 280,
-      quiet: 3,
-      dark:  '#e2e8f0',
-      light: '#0d1117',
+      width: 300,   // larger = bigger modules = easier to scan from a screen
+      quiet: 4,     // 4-module quiet zone on each side (spec minimum is 4)
+      dark:  '#000000',  // pure black dots — maximum contrast
+      light: '#ffffff',  // pure white background
     });
+
+    // Add a white border around the canvas so the QR is clearly delimited
+    // against the dark modal background — critical for camera detection
+    const W = canvas.width, H = canvas.height;
+    const BORDER = Math.round(W * 0.06); // 6% border
+    const tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width  = W + BORDER * 2;
+    tmpCanvas.height = H + BORDER * 2;
+    const ctx = tmpCanvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
+    ctx.drawImage(canvas, BORDER, BORDER);
+
+    // Copy back to original canvas
+    canvas.width  = tmpCanvas.width;
+    canvas.height = tmpCanvas.height;
+    canvas.style.width  = '300px';
+    canvas.style.height = '300px';
+    canvas.getContext('2d').drawImage(tmpCanvas, 0, 0);
   } catch (err) {
     console.error('[Sync] QR render error:', err);
     throw err;
@@ -412,14 +453,35 @@ function _startQRScan(videoEl, canvasEl, onProgress, onComplete) {
   const received = {};
   let total = null;
 
+  // Preprocessing canvas — applies contrast boost before jsQR to handle
+  // screen glare, moiré patterns, and low-contrast camera captures
+  const preCanvas = document.createElement('canvas');
+  const preCtx    = preCanvas.getContext('2d');
+
   _syncState.scanInterval = setInterval(() => {
     if (videoEl.readyState !== videoEl.HAVE_ENOUGH_DATA) return;
-    const ctx = canvasEl.getContext('2d');
-    canvasEl.width  = videoEl.videoWidth;
-    canvasEl.height = videoEl.videoHeight;
-    ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
-    const img = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height);
-    const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+
+    const vw = videoEl.videoWidth;
+    const vh = videoEl.videoHeight;
+    if (!vw || !vh) return;
+
+    // Draw video frame to processing canvas
+    preCanvas.width  = vw;
+    preCanvas.height = vh;
+    preCtx.drawImage(videoEl, 0, 0, vw, vh);
+
+    // Apply contrast + brightness boost to help with screen scanning
+    preCtx.filter = 'contrast(1.6) brightness(1.05)';
+    preCtx.drawImage(preCanvas, 0, 0);
+    preCtx.filter = 'none';
+
+    const img = preCtx.getImageData(0, 0, vw, vh);
+
+    // Try both normal and inverted — handles white-on-dark AND black-on-white
+    const code = jsQR(img.data, img.width, img.height, {
+      inversionAttempts: 'attemptBoth',
+    });
+
     if (!code) return;
 
     try {
@@ -437,7 +499,7 @@ function _startQRScan(videoEl, canvasEl, onProgress, onComplete) {
         onComplete(_decompress(compressed));
       }
     } catch (_) {}
-  }, 150);
+  }, 100); // 100ms = 10fps scan rate (was 150ms) for faster detection
 }
 
 // ─── Modal helpers ────────────────────────────────────────────────────────────

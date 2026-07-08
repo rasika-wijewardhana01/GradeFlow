@@ -657,7 +657,7 @@
     <div data-sync-view="send-qr" class="sync-view" style="display:none;">
       <button class="sync-back-btn" onclick="syncSetView('home')">← Back</button>
       <h3 class="sync-view-title">Scan on Your Other Device</h3>
-      <p class="sync-view-desc">Open GradeFlow on your phone, choose <em>Receive → Scan QR</em>, then point the camera at this screen.</p>
+      <p class="sync-view-desc">Open GradeFlow on your phone, choose <em>Receive → Scan QR</em>, then point the camera at this screen. Hold the phone <strong>15–30 cm away</strong> so the full QR fits in frame.</p>
 
       <div class="sync-qr-container">
         <canvas id="sync-qr-canvas" class="sync-qr-canvas"></canvas>
@@ -788,6 +788,9 @@
       </div>
 
       <p id="sync-qr-receive-progress" class="sync-qr-counter">Looking for QR code…</p>
+      <p style="font-size:0.76rem;color:#4a5568;text-align:center;margin-top:8px;line-height:1.5;">
+        💡 Hold steady 15–30 cm from the screen · Ensure the full QR is inside the frame · Avoid glare
+      </p>
     </div>
 
     <!-- ── VIEW: SUCCESS ───────────────────────────────────────────────────── -->
