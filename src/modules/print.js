@@ -78,7 +78,8 @@ async function printResults() {
 
   // ── 4. Column / font sizing (same logic as before, now at true A3 width) ──
   var A3_W   = CONTENT_W_PX;
-  var FIXW   = 320;
+  var NAME_W = 155;   // Student Name column width (was 130) — widened for readability
+  var FIXW   = 345;   // sum of non-subject column widths, kept in sync with NAME_W above
   var MIN_CW = 52, MAX_CW = 110;
   var subW   = Math.max(MIN_CW, Math.min(MAX_CW, Math.floor((A3_W - FIXW) / Math.max(subjects.length, 1))));
   var fs     = subW >= 90 ? 12 : subW >= 70 ? 11 : subW >= 56 ? 10 : 9;
@@ -150,7 +151,7 @@ async function printResults() {
     tableHTML += '<tr style="background:#f1f5f9;">'
       + '<th rowspan="2" style="width:42px;padding:7px ' + pad + 'px;border-bottom:2px solid #e5e7eb;text-align:center;font-size:' + fsSm + 'px;text-transform:uppercase;color:#6b7280;vertical-align:middle;">Rank</th>'
       + '<th rowspan="2" style="width:48px;padding:7px ' + pad + 'px;border-bottom:2px solid #e5e7eb;text-align:center;font-size:' + fsSm + 'px;text-transform:uppercase;color:#6b7280;vertical-align:middle;">Index</th>'
-      + '<th rowspan="2" style="width:130px;padding:7px 8px;border-bottom:2px solid #e5e7eb;font-size:' + fsSm + 'px;text-transform:uppercase;color:#6b7280;text-align:left;vertical-align:middle;">Student Name</th>';
+      + '<th rowspan="2" style="width:' + NAME_W + 'px;padding:7px 8px;border-bottom:2px solid #e5e7eb;font-size:' + fsSm + 'px;text-transform:uppercase;color:#6b7280;text-align:left;vertical-align:middle;">Student Name</th>';
 
     _catGroups.forEach(function(g){
       if (g.label === '') {
@@ -179,7 +180,7 @@ async function printResults() {
     tableHTML += '<tr style="background:#f1f5f9;">'
       + '<th style="width:42px;padding:7px ' + pad + 'px;border-bottom:2px solid #e5e7eb;text-align:center;font-size:' + fsSm + 'px;text-transform:uppercase;color:#6b7280;">Rank</th>'
       + '<th style="width:48px;padding:7px ' + pad + 'px;border-bottom:2px solid #e5e7eb;text-align:center;font-size:' + fsSm + 'px;text-transform:uppercase;color:#6b7280;">Index</th>'
-      + '<th style="width:130px;padding:7px 8px;border-bottom:2px solid #e5e7eb;font-size:' + fsSm + 'px;text-transform:uppercase;color:#6b7280;text-align:left;">Student Name</th>';
+      + '<th style="width:' + NAME_W + 'px;padding:7px 8px;border-bottom:2px solid #e5e7eb;font-size:' + fsSm + 'px;text-transform:uppercase;color:#6b7280;text-align:left;">Student Name</th>';
     subjects.forEach(function(s){
       tableHTML += '<th style="width:' + subW + 'px;padding:7px ' + pad + 'px;border-bottom:2px solid #e5e7eb;text-align:center;font-size:' + fsSm + 'px;text-transform:uppercase;color:#6b7280;overflow:hidden;text-overflow:ellipsis;">'
         + s.name + '<br><span style="font-weight:400;font-size:' + (fsSm-1) + 'px;">/' + s.max + '</span></th>';
