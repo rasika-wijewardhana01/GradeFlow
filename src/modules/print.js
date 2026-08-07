@@ -78,8 +78,8 @@ async function printResults() {
 
   // ── 4. Column / font sizing (same logic as before, now at true A3 width) ──
   var A3_W   = CONTENT_W_PX;
-  var NAME_W = 175;   // Student Name column width (was 130) — widened for readability
-  var FIXW   = 365;   // sum of non-subject column widths, kept in sync with NAME_W above
+  var NAME_W = 210;   // Student Name column width (was 130) — widened for readability
+  var FIXW   = 400;   // sum of non-subject column widths, kept in sync with NAME_W above
   var MIN_CW = 52, MAX_CW = 110;
   var subW   = Math.max(MIN_CW, Math.min(MAX_CW, Math.floor((A3_W - FIXW) / Math.max(subjects.length, 1))));
   var fs     = subW >= 90 ? 12 : subW >= 70 ? 11 : subW >= 56 ? 10 : 9;
